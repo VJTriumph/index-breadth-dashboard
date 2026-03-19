@@ -260,7 +260,7 @@ function renderTab(idx){
     '</div>'+
     '<div class="section-title">Breadth History</div>'+histSec+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section-title" style="margin-bottom:0">Stock Details</div>'+
-    '<button class="btn btn-success" onclick="exportExcel('"+cfg.name+"',appState.indices['"+cfg.name+"'])">Export Excel</button></div>'+
+    '<button class="btn btn-success" onclick="exportExcel(\x27"+cfg.name+"\x27,appState.indices[\x27"+cfg.name+"\x27])">Export Excel</button></div>'+
     '<div class="panel"><h3>Individual Stocks — Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   initCharts(idx,cfg.name,hist,period);
 }
@@ -278,7 +278,7 @@ function renderHist(idx,name,hist,period){
       return '<div class="history-card"><div class="period">'+p+'</div><div class="val" style="color:'+(cur!=null?color(cur):'var(--text2)')+'">'+
         (cur!=null?cur+'%':'—')+'</div>'+(chg!=null?'<div class="chg '+(parseFloat(chg)>=0?'green':'red')+'">'+(parseFloat(chg)>=0?'+':'')+chg+'%</div>':'<div class="chg" style="color:var(--text2)">—</div>')+'</div>';
     }).join('');
-    const htabs=periods.map(p=>'<button class="htab '+(p===period?'active':'')+'" onclick="switchPeriod('+idx+',(''+name+''),''+t.k+'',''+p+'')">'+p+'</button>').join('');
+    const htabs=periods.map(p=>'<button class="htab '+(p===period?'active':'')+' " onclick="switchPeriod('+idx+',\x27"+name+"\x27,\x27"+t.k+"\x27,\x27"+p+"\x27)">'+p+'</button>').join('');
     return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' — History</h3><div class="breadth-history-grid">'+cards+'</div><div class="history-tabs" id="ht-'+idx+'-'+t.k+'">'+htabs+'</div><div class="chart-container"><canvas id="ch-'+idx+'-'+t.k+'"></canvas></div></div>';
   }).join('');
 }
