@@ -260,7 +260,7 @@ function renderTab(idx){
     '</div>'+
     '<div class="section-title">Breadth History</div>'+histSec+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section-title" style="margin-bottom:0">Stock Details</div>'+
-    '<button class="btn btn-success" onclick='exportExcel("'+cfg.name+'",appState.indices["'+cfg.name+'"])'>Export Excel</button></div>'+
+    '<button class="btn btn-success" onclick="exportExcel('"+cfg.name+"',appState.indices['"+cfg.name+"'])">Export Excel</button></div>'+
     '<div class="panel"><h3>Individual Stocks — Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   initCharts(idx,cfg.name,hist,period);
 }
