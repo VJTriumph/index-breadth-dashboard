@@ -76,6 +76,7 @@ header h1{font-size:1.3rem;font-weight:700;color:var(--accent);}
   <h1>Index Breadth Dashboard</h1>
   <div class="header-right">
     <span class="last-updated">Data: <span id="lastUpdated">Loading...</span></span>
+    <button class="btn btn-success" onclick="exportAllCSV()">Export All CSV</button>
     <button class="btn btn-success" onclick="exportAllExcel()">Export All Excel</button>
   </div>
 </header>
@@ -88,10 +89,10 @@ header h1{font-size:1.3rem;font-weight:700;color:var(--accent);}
 const JSON_URL = 'https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/breadth.json';
 const appState = { data: null, charts: {}, histPeriod: {} };
 
-// ── BREADTH COLOR ────────────────────────────────────────────────────────────
+// ââ BREADTH COLOR ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function color(p){ return p>=60?'var(--green)':p>=40?'var(--yellow)':'var(--red)'; }
 
-// ── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+// ââ EXCEL EXPORT âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function exportExcel(name, stocks){
   const rows=[['Symbol','Price','Change%','SMA20','SMA50','SMA200','Above SMA20','Above SMA50','Above SMA200','52W High','52W Low','Near 52W High','Near 52W Low','Error']];
   stocks.forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
@@ -129,7 +130,52 @@ function exportAllExcel(){
   XLSX.writeFile(wb,'Index_Breadth_'+new Date().toISOString().split('T')[0]+'.xlsx');
 }
 
-// ── TABS ─────────────────────────────────────────────────────────────────────
+// ── CSV EXPORT – raw data for manual cross-check ──────────────────────────
+function exportCSV(name, stocks){
+  const updatedAt=appState.data?.updatedAt||new Date().toISOString();
+  const header=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200',
+    'AboveSMA20','AboveSMA50','AboveSMA200','High52W','Low52W','NearHigh','NearLow','Error'];
+  const rows=stocks.map(s=>[
+    updatedAt,name,s.symbol,s.price,s.changePct,
+    s.sma20,s.sma50,s.sma200,
+    s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
+    s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
+    s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
+    s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||''
+  ]);
+  const csv=[header,...rows].map(r=>r.map(v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=name.replace(/\s+/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function exportAllCSV(){
+  if(!appState.data) return;
+  const updatedAt=appState.data.updatedAt||new Date().toISOString();
+  const header=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200',
+    'AboveSMA20','AboveSMA50','AboveSMA200','High52W','Low52W','NearHigh','NearLow','Error'];
+  const rows=[];
+  Object.entries(appState.data.indices).forEach(([name,idx])=>{
+    (idx.stocks||[]).forEach(s=>{
+      rows.push([updatedAt,name,s.symbol,s.price,s.changePct,
+        s.sma20,s.sma50,s.sma200,
+        s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
+        s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
+        s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
+        s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']);
+    });
+  });
+  const csv=[header,...rows].map(r=>r.map(v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='Index_Breadth_All_'+new Date().toISOString().split('T')[0]+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+// ââ TABS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function buildTabs(names){
   const te=document.getElementById('indexTabs'), ce=document.getElementById('tabContents');
   te.innerHTML=''; ce.innerHTML='';
@@ -153,7 +199,7 @@ function switchTab(idx,names){
   if(appState.data?.indices[name]) renderTab(idx,name);
 }
 
-// ── HISTORY HELPERS ──────────────────────────────────────────────────────────
+// ââ HISTORY HELPERS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function getPH(hist, period){
   const ms={'1D':864e5,'1W':7*864e5,'1M':30*864e5,'3M':90*864e5};
   const cut=Date.now()-(ms[period]||ms['1M']);
@@ -163,12 +209,17 @@ function getPH(hist, period){
   });
 }
 
-// ── RENDER TAB ───────────────────────────────────────────────────────────────
+// ââ RENDER TAB âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function renderTab(idx, name){
   const idxData = appState.data.indices[name];
   if(!idxData){ document.getElementById('tab-'+idx).innerHTML='<div class="error-banner"><h4>No data for '+name+'</h4></div>'; return; }
   const b = idxData.breadth;
-  const hist = idxData.history || [];
+  const _lsKey='bh_'+name;
+  const _lsHist=JSON.parse(localStorage.getItem(_lsKey)||'[]');
+  const _jsonHist=idxData.history||[];
+  const _allHist=[..._lsHist.map(e=>({...e,_n:typeof e.ts==='number'?e.ts:new Date(e.ts).getTime()})),..._jsonHist.map(e=>({...e,_n:typeof e.ts==='number'?e.ts:new Date(e.ts).getTime()}))];
+  const _seen=new Set();
+  const hist=_allHist.filter(e=>{if(_seen.has(e._n))return false;_seen.add(e._n);return true;}).sort((a,b)=>a._n-b._n).map(({_n,...r})=>r);
   const stocks = idxData.stocks || [];
   const period = appState.histPeriod[name] || '1D';
 
@@ -182,9 +233,9 @@ function renderTab(idx, name){
     const sg=s.changePct>=0?'+':'';
     const sb=(lbl,ab)=>ab===null||ab===undefined?'<span class="badge badge-gray">'+lbl+'</span>':ab?'<span class="badge badge-green">'+lbl+' YES</span>':'<span class="badge badge-red">'+lbl+' NO</span>';
     return '<tr><td><strong>'+s.symbol+'</strong></td>'
-      +'<td>'+(s.price?'Rs'+s.price:'—')+'</td>'
-      +'<td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'—')+'</td>'
-      +'<td>'+(s.sma20||'—')+'</td><td>'+(s.sma50||'—')+'</td><td>'+(s.sma200||'—')+'</td>'
+      +'<td>'+(s.price?'Rs'+s.price:'â')+'</td>'
+      +'<td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'â')+'</td>'
+      +'<td>'+(s.sma20||'â')+'</td><td>'+(s.sma50||'â')+'</td><td>'+(s.sma200||'â')+'</td>'
       +'<td>'+sb('20',s.aboveSma20)+' '+sb('50',s.aboveSma50)+' '+sb('200',s.aboveSma200)+'</td>'
       +'<td>'+(s.nearHigh?'<span class="badge badge-green">52H</span>':'')+(s.nearLow?' <span class="badge badge-red">52L</span>':'')+'</td>'
       +'<td>'+(s.error?'<span class="badge badge-red" title="'+s.error+'">ERR</span>':'<span class="badge badge-green">OK</span>')+'</td></tr>';
@@ -193,7 +244,7 @@ function renderTab(idx, name){
   const histSec = renderHistSection(idx, name, hist, period);
 
   document.getElementById('tab-'+idx).innerHTML = errHtml
-    +'<div class="section-title">Breadth Summary — '+name+' ('+b.valid+'/'+b.total+' stocks)</div>'
+    +'<div class="section-title">Breadth Summary â '+name+' ('+b.valid+'/'+b.total+' stocks)</div>'
     +'<div class="cards-row">'
     +'<div class="card"><div class="label">Above 20 SMA</div><div class="value" style="color:'+color(b.above20Pct)+'">'+b.above20Pct+'%</div><div class="sub">'+b.above20+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above20Pct+'%;background:'+color(b.above20Pct)+'"></div></div></div>'
     +'<div class="card"><div class="label">Above 50 SMA</div><div class="value" style="color:'+color(b.above50Pct)+'">'+b.above50Pct+'%</div><div class="sub">'+b.above50+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above50Pct+'%;background:'+color(b.above50Pct)+'"></div></div></div>'
@@ -208,8 +259,9 @@ function renderTab(idx, name){
     +'<div class="section-title">Breadth History</div>'+histSec
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
     +'<div class="section-title" style="margin-bottom:0">Stock Details</div>'
+    +'<button class="btn btn-success" onclick="exportCSV(\'' +name+ '\',appState.data.indices[\'' +name+ '\'].stocks)" style="margin-right:8px">Export CSV</button>'
     +'<button class="btn btn-success" onclick="exportExcel(\'' +name+ '\',appState.data.indices[\'' +name+ '\'].stocks)">Export Excel</button></div>'
-    +'<div class="panel"><h3>Individual Stocks — Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    +'<div class="panel"><h3>Individual Stocks â Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 
   initCharts(idx, name, hist, period);
 }
@@ -228,12 +280,12 @@ function renderHistSection(idx, name, hist, period){
       const prv=ph.length>1?ph[ph.length-2][t.k]:null;
       const chg=cur!=null&&prv!=null?(cur-prv).toFixed(1):null;
       return '<div class="history-card"><div class="period">'+p+'</div>'
-        +'<div class="val" style="color:'+(cur!=null?color(cur):'var(--text2)')+'">'+(cur!=null?cur+'%':'—')+'</div>'
-        +(chg!=null?'<div class="chg '+(parseFloat(chg)>=0?'green':'red')+'">'+(parseFloat(chg)>=0?'+':'')+chg+'%</div>':'<div class="chg" style="color:var(--text2)">—</div>')
+        +'<div class="val" style="color:'+(cur!=null?color(cur):'var(--text2)')+'">'+(cur!=null?cur+'%':'â')+'</div>'
+        +(chg!=null?'<div class="chg '+(parseFloat(chg)>=0?'green':'red')+'">'+(parseFloat(chg)>=0?'+':'')+chg+'%</div>':'<div class="chg" style="color:var(--text2)">â</div>')
         +'</div>';
     }).join('');
     const htabs=periods.map(p=>'<button class="htab '+(p===period?'active':'')+'" onclick="switchPeriod('+idx+',\'' +name+ '\',\'' +t.k+ '\',\'' +p+ '\')">'+p+'</button>').join('');
-    return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' — History</h3>'
+    return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' â History</h3>'
       +'<div class="breadth-history-grid">'+cards+'</div>'
       +'<div class="history-tabs" id="ht-'+idx+'-'+t.k+'">'+htabs+'</div>'
       +'<div class="chart-container"><canvas id="ch-'+idx+'-'+t.k+'"></canvas></div></div>';
@@ -269,7 +321,11 @@ function initCharts(idx, name, hist, period){
 
 function switchPeriod(idx, name, tk, period){
   appState.histPeriod[name]=period;
-  const hist=appState.data?.indices[name]?.history||[];
+  const _spLs=JSON.parse(localStorage.getItem('bh_'+name)||'[]');
+  const _spJs=appState.data?.indices[name]?.history||[];
+  const _spAll=[..._spLs.map(e=>({...e,_n:typeof e.ts==='number'?e.ts:new Date(e.ts).getTime()})),..._spJs.map(e=>({...e,_n:typeof e.ts==='number'?e.ts:new Date(e.ts).getTime()}))];
+  const _spSeen=new Set();
+  const hist=_spAll.filter(e=>{if(_spSeen.has(e._n))return false;_spSeen.add(e._n);return true;}).sort((a,b)=>a._n-b._n).map(({_n,...r})=>r);
   document.querySelectorAll('#ht-'+idx+'-'+tk+' .htab').forEach(b=>b.classList.toggle('active',b.textContent===period));
   const colors={a20:{c:'rgba(108,99,255,1)',f:'rgba(108,99,255,0.15)'},a50:{c:'rgba(34,197,94,1)',f:'rgba(34,197,94,0.15)'},a200:{c:'rgba(245,158,11,1)',f:'rgba(245,158,11,0.15)'}};
   const col=colors[tk];
@@ -282,7 +338,7 @@ function switchPeriod(idx, name, tk, period){
   appState.charts[key]=new Chart(el.getContext('2d'),{type:'line',data:{labels,datasets:[{label:'Breadth %',data,borderColor:col.c,backgroundColor:col.f,fill:true,tension:0.4,pointRadius:data.length>20?1:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y?.toFixed(1)+'%'}}},scales:{x:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',maxTicksLimit:7,font:{size:10}}},y:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'%'},min:0,max:100}}}});
 }
 
-// ── LOAD DATA FROM JSON ───────────────────────────────────────────────────────
+// ââ LOAD DATA FROM JSON âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 async function loadDashboard(){
   document.getElementById('loadingBar').style.width='30%';
   try{
@@ -297,6 +353,25 @@ async function loadDashboard(){
     const names = Object.keys(data.indices);
     if(!names.length) throw new Error('No index data in JSON');
 
+    // Save breadth snapshot to localStorage for history accumulation
+    names.forEach(name=>{
+      const idxD=data.indices[name];
+      if(!idxD||!idxD.breadth) return;
+      const b=idxD.breadth;
+      const lsKey='bh_'+name;
+      const existing=JSON.parse(localStorage.getItem(lsKey)||'[]');
+      const snapTs=(idxD.history&&idxD.history.length)?idxD.history[0].ts:Date.now();
+      const snapTsNum=typeof snapTs==='number'?snapTs:new Date(snapTs).getTime();
+      const alreadyExists=existing.some(e=>{
+        const t=typeof e.ts==='number'?e.ts:new Date(e.ts).getTime();
+        return Math.abs(t-snapTsNum)<5*60*1000;
+      });
+      if(!alreadyExists){
+        existing.push({ts:snapTsNum,a20:b.above20Pct,a50:b.above50Pct,a200:b.above200Pct});
+        if(existing.length>500) existing.splice(0,existing.length-500);
+        localStorage.setItem(lsKey,JSON.stringify(existing));
+      }
+    });
     buildTabs(names);
     names.forEach((name,i)=>renderTab(i,name));
 
@@ -309,7 +384,7 @@ async function loadDashboard(){
       '<div style="padding:20px"><div class="error-banner">'
       +'<h4>Failed to load breadth data</h4>'
       +e.message
-      +'<br><small style="margin-top:8px;display:block;color:var(--text2)">The GitHub Actions workflow runs at 9:00 AM and 3:30 PM IST on weekdays. Data may not be available yet — please check back after market open.</small>'
+      +'<br><small style="margin-top:8px;display:block;color:var(--text2)">The GitHub Actions workflow runs at 9:00 AM and 3:30 PM IST on weekdays. Data may not be available yet â please check back after market open.</small>'
       +'</div></div>';
   }
 }
