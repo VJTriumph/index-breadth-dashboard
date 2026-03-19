@@ -111,15 +111,19 @@ if(sym&&sym!=='STOCKS'&&sym!=='INDEX'&&sym.length>1)symbols.push(sym);
 return[...new Set(symbols)];
 }
 async function fetchQuote(symbol){
-const ns=symbol+'.NS';
+const ns=encodeURIComponent(symbol+'.NS');
+const yBase='https://query1.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y';
+const yBase2='https://query2.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y';
 const yUrls=[
-'https://corsproxy.io/?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y'),
-'https://corsproxy.io/?url='+encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y'),
-'https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y')
+'https://api.allorigins.win/raw?url='+encodeURIComponent(yBase),
+'https://api.allorigins.win/raw?url='+encodeURIComponent(yBase2),
+'https://thingproxy.freeboard.io/fetch/'+yBase,
+yBase,
+yBase2
 ];
 for(const url of yUrls){
 try{
-const r=await fetch(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(15000)});
+const r=await fetch(url,{headers:{Accept:'application/json','User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(12000)});
 if(!r.ok)continue;
 const j=await r.json();
 const res=j?.chart?.result?.[0];
