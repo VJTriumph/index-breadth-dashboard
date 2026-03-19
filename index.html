@@ -98,9 +98,7 @@ const CSV_FILES=[
 const DATA_BASE='https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/';
 const appState={indices:{},charts:{},histPeriod:{}};
 function parseCSV(text,indexKey){
-  const lines=text.trim().split(/
-?
-/);
+  const lines=text.trim().split(/\r?\n/)
   if(lines.length<2)return[];
   const vals=lines[1].split(',').slice(1);
   const suffix=' '+indexKey;
