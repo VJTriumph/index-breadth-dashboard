@@ -2,8 +2,8 @@ name: Index Breadth Dashboard
 
 on:
   schedule:
-    - cron: "30 3 * * 1-5"   # 9:00 AM IST (3:30 UTC) Mon-Fri
-    - cron: "0 10 * * 1-5"   # 3:30 PM IST (10:00 UTC) Mon-Fri
+    - cron: "30 3 * * 1-5"   # 9:00 AM IST Mon-Fri
+    - cron: "0 10 * * 1-5"   # 3:30 PM IST Mon-Fri
   workflow_dispatch:
 
 jobs:
@@ -24,23 +24,16 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install yfinance pandas requests
+          pip install "yfinance>=0.2.40" pandas requests
 
       - name: Run breadth dashboard
         run: python breadth_dashboard.py
-
-      - name: Show output files
-        run: |
-          echo "=== Files written ==="
-          ls -lah data/ || echo "data/ not found"
-          ls -lah breadth_history.json || echo "breadth_history.json not found"
 
       - name: Commit breadth.json to repo
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git status
-          git add data/breadth.json breadth_history.json
+          git add -f data/breadth.json breadth_history.json
           git diff --cached --stat
           git diff --cached --quiet || git commit -m "Auto: breadth data $(date +'%Y-%m-%d %H:%M') UTC"
           git push
