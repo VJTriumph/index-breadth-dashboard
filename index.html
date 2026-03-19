@@ -1,534 +1,353 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Index Breadth Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --bg: #0f1117;
-    --bg2: #1a1d27;
-    --bg3: #252836;
-    --accent: #6c63ff;
-    --green: #22c55e;
-    --red: #ef4444;
-    --yellow: #f59e0b;
-    --text: #e2e8f0;
-    --text2: #94a3b8;
-    --border: #2d3748;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-  header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-  header span { font-size: 0.85rem; color: var(--text2); }
-  .last-updated { margin-left: auto; font-size: 0.8rem; color: var(--text2); }
-  .tabs-wrapper { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 4px; }
-  .tab-btn { padding: 12px 20px; border: none; background: none; color: var(--text2); cursor: pointer; font-size: 0.9rem; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 500; }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .tab-content { display: none; padding: 24px; }
-  .tab-content.active { display: block; }
-  .section-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
-  .section-title::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
-  .cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
-  .card .label { font-size: 0.8rem; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .card .value { font-size: 2rem; font-weight: 700; }
-  .card .sub { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
-  .card .bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 12px; overflow: hidden; }
-  .card .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-  .green { color: var(--green); }
-  .red { color: var(--red); }
-  .yellow { color: var(--yellow); }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .panel h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 16px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
-  .history-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-  .htab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text2); cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
-  .htab.active, .htab:hover { background: var(--accent); color: white; border-color: var(--accent); }
-  .chart-container { position: relative; height: 200px; }
-  .stock-table { width: 100%; border-collapse: collapse; }
-  .stock-table th { font-size: 0.75rem; color: var(--text2); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
-  .stock-table td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid rgba(45,55,72,0.5); }
-  .stock-table tr:last-child td { border-bottom: none; }
-  .stock-table tr:hover td { background: var(--bg3); }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
-  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
-  .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
-  .breadth-gauge { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
-  .gauge-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; border: 6px solid; }
-  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(45,55,72,0.5); }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-label { font-size: 0.85rem; color: var(--text2); }
-  .summary-val { font-size: 0.9rem; font-weight: 600; }
-  .stocks-near { font-size: 0.8rem; }
-  .tag { display: inline-block; padding: 2px 6px; border-radius: 3px; margin: 1px; font-size: 0.72rem; }
-  .tag-high { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-  .tag-low { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-  .input-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-  .add-stock-input { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; flex: 1; min-width: 120px; }
-  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-  .breadth-history-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-  .history-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
-  .history-card .period { font-size: 0.75rem; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; }
-  .history-card .val { font-size: 1.4rem; font-weight: 700; }
-  .history-card .chg { font-size: 0.75rem; margin-top: 4px; }
-  .stocks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
-  .stock-chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; }
-  .stock-chip .del-btn { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 0.9rem; padding: 0 2px; }
-  .stock-chip .del-btn:hover { color: var(--red); }
-  @media (max-width: 768px) {
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .cards-row { grid-template-columns: repeat(2, 1fr); }
-    .breadth-history-grid { grid-template-columns: repeat(2, 1fr); }
-    .tabs-wrapper { overflow-x: auto; }
-  }
+:root{--bg:#0f1117;--bg2:#1a1d27;--bg3:#252836;--accent:#6c63ff;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--text:#e2e8f0;--text2:#94a3b8;--border:#2d3748;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+header h1{font-size:1.3rem;font-weight:700;color:var(--accent);}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.last-updated{font-size:0.8rem;color:var(--text2);}
+.btn{padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;transition:all 0.2s;}
+.btn-primary{background:var(--accent);color:white;}
+.btn-primary:hover{opacity:0.85;}
+.btn-success{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.btn-success:hover{background:rgba(34,197,94,0.25);}
+.loading-bar{height:3px;background:var(--border);overflow:hidden;}
+.loading-bar-fill{height:100%;background:var(--accent);width:0%;transition:width 0.3s;}
+.tabs-wrapper{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:4px;overflow-x:auto;}
+.tab-btn{padding:11px 18px;border:none;background:none;color:var(--text2);cursor:pointer;font-size:0.88rem;border-bottom:3px solid transparent;transition:all 0.2s;font-weight:500;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;padding:20px 24px;}
+.tab-content.active{display:block;}
+.error-banner{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:var(--red);font-size:0.85rem;}
+.warn-banner{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;color:var(--yellow);font-size:0.85rem;}
+.error-banner h4{margin-bottom:6px;font-size:0.9rem;}
+.error-list{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.error-list li{background:rgba(239,68,68,0.15);padding:2px 8px;border-radius:4px;font-size:0.78rem;}
+.section-title{font-size:1rem;font-weight:600;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:8px;}
+.section-title::before{content:'';width:4px;height:16px;background:var(--accent);border-radius:2px;}
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;}
+.card .label{font-size:0.75rem;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.card .value{font-size:1.8rem;font-weight:700;}
+.card .sub{font-size:0.78rem;color:var(--text2);margin-top:3px;}
+.card .bar{height:5px;background:var(--border);border-radius:3px;margin-top:10px;overflow:hidden;}
+.card .bar-fill{height:100%;border-radius:3px;transition:width 0.5s;}
+.green{color:var(--green);}
+.red{color:var(--red);}
+.yellow{color:var(--yellow);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.panel h3{font-size:0.82rem;font-weight:600;margin-bottom:14px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;}
+.history-tabs{display:flex;gap:5px;margin-bottom:14px;}
+.htab{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer;font-size:0.78rem;transition:all 0.2s;}
+.htab.active,.htab:hover{background:var(--accent);color:white;border-color:var(--accent);}
+.chart-container{position:relative;height:180px;}
+.stock-table{width:100%;border-collapse:collapse;}
+.stock-table th{font-size:0.72rem;color:var(--text2);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;white-space:nowrap;}
+.stock-table td{padding:7px 10px;font-size:0.82rem;border-bottom:1px solid rgba(45,55,72,0.4);}
+.stock-table tr:last-child td{border-bottom:none;}
+.stock-table tr:hover td{background:var(--bg3);}
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:0.72rem;font-weight:600;}
+.badge-green{background:rgba(34,197,94,0.15);color:var(--green);}
+.badge-red{background:rgba(239,68,68,0.15);color:var(--red);}
+.badge-yellow{background:rgba(245,158,11,0.15);color:var(--yellow);}
+.badge-gray{background:rgba(148,163,184,0.15);color:var(--text2);}
+.breadth-history-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.history-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.history-card .period{font-size:0.7rem;color:var(--text2);margin-bottom:4px;text-transform:uppercase;}
+.history-card .val{font-size:1.3rem;font-weight:700;}
+.history-card .chg{font-size:0.7rem;margin-top:3px;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:4px;}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.74rem;}
+.tag-high{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
+.tag-low{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr;}.cards-row{grid-template-columns:repeat(2,1fr);}.breadth-history-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
 <body>
 <header>
-  <h1>📊 Index Breadth Dashboard</h1>
-  <span>Market Health Monitor</span>
-  <div class="last-updated">Last updated: <span id="lastUpdated">—</span></div>
+  <h1>Index Breadth Dashboard</h1>
+  <div class="header-right">
+    <span class="last-updated">Updated: <span id="lastUpdated">Loading...</span></span>
+    <button class="btn btn-primary" onclick="refreshAll()">Refresh Data</button>
+    <button class="btn btn-success" onclick="exportAllExcel()">Export All Excel</button>
+  </div>
 </header>
+<div class="loading-bar"><div class="loading-bar-fill" id="loadingBar"></div></div>
+<div id="globalError"></div>
 <div class="tabs-wrapper" id="indexTabs"></div>
 <div id="tabContents"></div>
-
 <script>
-// ===================== CONFIG =====================
-const INDICES = [
-  {
-    id: 'nifty50',
-    name: 'Nifty 50',
-    stocks: ['RELIANCE','TCS','INFY','HDFCBANK','ICICIBANK','WIPRO','LT','HCLTECH','KOTAKBANK','AXISBANK',
-             'ITC','SBIN','BAJFINANCE','BHARTIARTL','ASIANPAINT','MARUTI','NESTLEIND','POWERGRID','NTPC','TECHM',
-             'ULTRACEMCO','SUNPHARMA','TITAN','ADANIENT','HINDUNILVR','BAJAJFINSV','DIVISLAB','CIPLA','DRREDDY','EICHERMOT',
-             'BPCL','GRASIM','HDFCLIFE','HEROMOTOCO','HINDALCO','INDUSINDBK','JSWSTEEL','LTIM','ONGC','SBILIFE',
-             'TATACONSUM','TATAMOTORS','TATASTEEL','TRENT','UPL','VEDL','BRITANNIA','COALINDIA','APOLLOHOSP','ADANIPORTS']
-  },
-  {
-    id: 'niftybank',
-    name: 'Nifty Bank',
-    stocks: ['HDFCBANK','ICICIBANK','KOTAKBANK','AXISBANK','SBIN','INDUSINDBK','BANDHANBNK','FEDERALBNK','PNB','IDFCFIRSTB',
-             'AUBANK','RBLBANK']
-  },
-  {
-    id: 'niftyit',
-    name: 'Nifty IT',
-    stocks: ['TCS','INFY','WIPRO','HCLTECH','TECHM','LTIM','MPHASIS','COFORGE','PERSISTENT','LTTS']
-  },
-  {
-    id: 'niftymidcap',
-    name: 'Nifty Midcap 150',
-    stocks: ['ABCAPITAL','AARTIIND','APLAPOLLO','ASTRAL','BAJAJHFL','BALKRISIND','BATAINDIA','BERGEPAINT','BIOCON','BSOFT',
-             'CANFINHOME','CASTROLIND','CEATLTD','CHOLAFIN','CUB','CUMMINSIND','DABUR','DALMIACEME','DEEPAKNTR','DIXON',
-             'ELGIEQUIP','ESCORTS','EXIDEIND','GLENMARK','GLAXO','GNFC','GODREJPROP','GPPL','GUJGASLTD','HAPPSTMNDS',
-             'HFCL','IEX','INDIAMART','INDIACEM','INOXWIND','JKCEMENT','JUBLFOOD','KALYANKJIL','KANSAINER','KFINTECH',
-             'LICHSGFIN','LICI','LUPIN','MARICO','MAXHEALTH','MCX','MFSL','MOTILALOFS','MUTHOOTFIN','NATIONALUM']
-  }
+const CSV_FILES=[
+  {file:'NIFTY 100.csv',name:'Nifty 100',indexKey:'NIFTY 100'},
+  {file:'NIFTY MIDCAP 150.csv',name:'Nifty Midcap 150',indexKey:'NIFTY MIDCAP 150'},
+  {file:'nifty microcap 250.csv',name:'Nifty Microcap 250',indexKey:'NIFTY MICROCAP 250'},
+  {file:'nifty smallcap 250.csv',name:'Nifty Smallcap 250',indexKey:'NIFTY SMALLCAP 250'}
 ];
-
-// ===================== STATE =====================
-const state = {
-  indices: {},
-  historyPeriod: {}
-};
-
-// Initialize state for each index
-INDICES.forEach(idx => {
-  state.indices[idx.id] = generateMockData(idx.stocks);
-  state.historyPeriod[idx.id] = '1D';
-});
-
-// ===================== MOCK DATA GENERATOR =====================
-function generateMockData(stocks) {
-  const n = stocks.length;
-  const data = {
-    stocks: {},
-    breadthHistory: {
-      above20SMA: { '1D': [], '1W': [], '1M': [], '3M': [] },
-      above50SMA: { '1D': [], '1W': [], '1M': [], '3M': [] },
-      above200SMA: { '1D': [], '1W': [], '1M': [], '3M': [] }
-    }
-  };
-
-  stocks.forEach(s => {
-    const price = 100 + Math.random() * 4900;
-    const high52 = price * (1 + Math.random() * 0.3);
-    const low52 = price * (0.6 + Math.random() * 0.2);
-    const sma20 = price * (0.92 + Math.random() * 0.16);
-    const sma50 = price * (0.88 + Math.random() * 0.2);
-    const sma200 = price * (0.78 + Math.random() * 0.28);
-    const change = (Math.random() - 0.48) * 6;
-    data.stocks[s] = {
-      price: price.toFixed(2),
-      change: change.toFixed(2),
-      changePct: ((change / price) * 100).toFixed(2),
-      sma20: sma20.toFixed(2),
-      sma50: sma50.toFixed(2),
-      sma200: sma200.toFixed(2),
-      high52: high52.toFixed(2),
-      low52: low52.toFixed(2),
-      aboveSma20: price > sma20,
-      aboveSma50: price > sma50,
-      aboveSma200: price > sma200,
-      nearHigh: (price / high52) >= 0.95,
-      nearLow: (price / low52) <= 1.05
-    };
-  });
-
-  // Generate history data (30 data points each)
-  ['above20SMA', 'above50SMA', 'above200SMA'].forEach(type => {
-    const baseVal = 40 + Math.random() * 40;
-    Object.keys(data.breadthHistory[type]).forEach(period => {
-      const points = period === '1D' ? 30 : period === '1W' ? 30 : period === '1M' ? 30 : 30;
-      const arr = [];
-      let val = baseVal + (Math.random() - 0.5) * 20;
-      for (let i = 0; i < points; i++) {
-        val = Math.max(5, Math.min(95, val + (Math.random() - 0.5) * 8));
-        arr.push(parseFloat(val.toFixed(1)));
-      }
-      data.breadthHistory[type][period] = arr;
-    });
-  });
-
-  return data;
+const DATA_BASE='https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/';
+const appState={indices:{},charts:{},histPeriod:{}};
+function parseCSV(text,indexKey){
+  const lines=text.trim().split(/
+?
+/);
+  if(lines.length<2)return[];
+  const vals=lines[1].split(',').slice(1);
+  const suffix=' '+indexKey;
+  return [...new Set(vals.map(v=>{
+    v=v.trim().replace(/"/g,'');
+    return v.toUpperCase().endsWith(indexKey)?v.slice(0,v.length-suffix.length).trim():v.split(' ')[0].trim();
+  }).filter(s=>s.length>0&&s!=='STOCKS'))];
 }
-
-function computeBreadth(idxId) {
-  const d = state.indices[idxId];
-  const stocks = Object.values(d.stocks);
-  const n = stocks.length;
-  const above20 = stocks.filter(s => s.aboveSma20).length;
-  const above50 = stocks.filter(s => s.aboveSma50).length;
-  const above200 = stocks.filter(s => s.aboveSma200).length;
-  const nearHigh = stocks.filter(s => s.nearHigh);
-  const nearLow = stocks.filter(s => s.nearLow);
-  return {
-    n, above20, above50, above200,
-    above20Pct: ((above20/n)*100).toFixed(1),
-    above50Pct: ((above50/n)*100).toFixed(1),
-    above200Pct: ((above200/n)*100).toFixed(1),
-    nearHigh, nearLow
-  };
+async function fetchQuote(symbol){
+  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(symbol+'.NS')+'?interval=1d&range=1y';
+  try{
+    const r=await fetch(url,{headers:{Accept:'application/json'}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    const res=j?.chart?.result?.[0];
+    if(!res)throw new Error('No data');
+    const closes=(res.indicators?.quote?.[0]?.close||[]).filter(c=>c!=null);
+    if(closes.length<5)throw new Error('Insufficient data');
+    const price=res.meta.regularMarketPrice||closes[closes.length-1];
+    const prev=res.meta.previousClose||closes[closes.length-2]||price;
+    const chg=price-prev,chgPct=(chg/prev)*100;
+    const high52=Math.max(...closes),low52=Math.min(...closes);
+    function sma(n){if(closes.length<n)return null;return closes.slice(-n).reduce((a,b)=>a+b,0)/n;}
+    const s20=sma(20),s50=sma(50),s200=sma(200);
+    return{symbol,price:+price.toFixed(2),changePct:+chgPct.toFixed(2),
+      sma20:s20?+s20.toFixed(2):null,sma50:s50?+s50.toFixed(2):null,sma200:s200?+s200.toFixed(2):null,
+      aboveSma20:s20?price>s20:null,aboveSma50:s50?price>s50:null,aboveSma200:s200?price>s200:null,
+      high52:+high52.toFixed(2),low52:+low52.toFixed(2),
+      nearHigh:price/high52>=0.95,nearLow:price<=low52*1.05,error:null};
+  }catch(e){return{symbol,error:e.message,price:null,changePct:null,aboveSma20:null,aboveSma50:null,aboveSma200:null,nearHigh:false,nearLow:false};}
 }
-
-function getPeriodLabel(period, i, total) {
-  const now = new Date();
-  if (period === '1D') {
-    const t = new Date(now - (total - 1 - i) * 30 * 60 * 1000);
-    return t.getHours().toString().padStart(2,'0') + ':' + t.getMinutes().toString().padStart(2,'0');
-  } else if (period === '1W') {
-    const t = new Date(now - (total - 1 - i) * 24 * 60 * 60 * 1000);
-    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][t.getDay()];
-  } else if (period === '1M') {
-    const t = new Date(now - (total - 1 - i) * 24 * 60 * 60 * 1000);
-    return (t.getMonth()+1) + '/' + t.getDate();
-  } else {
-    const t = new Date(now - (total - 1 - i) * 3 * 24 * 60 * 60 * 1000);
-    return (t.getMonth()+1) + '/' + t.getDate();
+async function fetchAll(syms,onProg){
+  const res={};
+  for(let i=0;i<syms.length;i+=5){
+    const batch=syms.slice(i,i+5);
+    const br=await Promise.all(batch.map(s=>fetchQuote(s)));
+    br.forEach(r=>{res[r.symbol]=r;});
+    if(onProg)onProg(Math.min(i+5,syms.length),syms.length);
+    await new Promise(r=>setTimeout(r,300));
   }
+  return res;
 }
-
-function getColor(pct) {
-  const v = parseFloat(pct);
-  if (v >= 60) return 'var(--green)';
-  if (v >= 40) return 'var(--yellow)';
-  return 'var(--red)';
+function breadth(stocks){
+  const v=Object.values(stocks).filter(s=>!s.error);
+  const n=v.length;
+  if(!n)return null;
+  const a20=v.filter(s=>s.aboveSma20===true).length;
+  const a50=v.filter(s=>s.aboveSma50===true).length;
+  const a200=v.filter(s=>s.aboveSma200===true).length;
+  const errs=Object.values(stocks).filter(s=>s.error);
+  return{total:Object.keys(stocks).length,valid:n,errors:errs,
+    above20:a20,above50:a50,above200:a200,
+    above20Pct:+((a20/n)*100).toFixed(1),above50Pct:+((a50/n)*100).toFixed(1),above200Pct:+((a200/n)*100).toFixed(1),
+    nearHigh:v.filter(s=>s.nearHigh),nearLow:v.filter(s=>s.nearLow)};
 }
-
-function getBadgeClass(pct) {
-  const v = parseFloat(pct);
-  if (v >= 60) return 'badge-green';
-  if (v >= 40) return 'badge-yellow';
-  return 'badge-red';
+function color(p){return p>=60?'var(--green)':p>=40?'var(--yellow)':'var(--red)';}
+function recHist(name,b){
+  const k='bh_'+name;
+  let h=JSON.parse(localStorage.getItem(k)||'[]');
+  h.push({ts:Date.now(),a20:b.above20Pct,a50:b.above50Pct,a200:b.above200Pct});
+  h=h.filter(x=>x.ts>Date.now()-90*864e5);
+  localStorage.setItem(k,JSON.stringify(h));
+  return h;
 }
-
-// ===================== RENDER =====================
-function buildTabs() {
-  const tabsEl = document.getElementById('indexTabs');
-  const contentsEl = document.getElementById('tabContents');
-  tabsEl.innerHTML = '';
-  contentsEl.innerHTML = '';
-
-  INDICES.forEach((idx, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
-    btn.textContent = idx.name;
-    btn.onclick = () => switchTab(idx.id);
-    tabsEl.appendChild(btn);
-
-    const div = document.createElement('div');
-    div.className = 'tab-content' + (i === 0 ? ' active' : '');
-    div.id = 'tab-' + idx.id;
-    div.innerHTML = renderTabContent(idx);
-    contentsEl.appendChild(div);
+function getPH(hist,period){
+  const ms={1:864e5,'1W':7*864e5,'1M':30*864e5,'3M':90*864e5};
+  const cut=Date.now()-ms[period]||ms['1M'];
+  return hist.filter(x=>x.ts>=cut);
+}
+function exportExcel(name,stocks){
+  const rows=[['Symbol','Price','Change%','SMA20','SMA50','SMA200','Above SMA20','Above SMA50','Above SMA200','52W High','52W Low','Near 52W High','Near 52W Low','Error']];
+  Object.values(stocks).forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
+    s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
+    s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
+    s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
+    s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[10,10,10,10,10,10,12,12,13,10,10,14,13,30].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,name.substring(0,31));
+  XLSX.writeFile(wb,name.replace(/s+/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.xlsx');
+}
+function exportAllExcel(){
+  const wb=XLSX.utils.book_new();
+  const sumR=[['Index','Total','Valid','Errors','Above 20 SMA%','Above 50 SMA%','Above 200 SMA%','Near 52H','Near 52L','Updated']];
+  CSV_FILES.forEach(cfg=>{
+    const d=appState.indices[cfg.name];if(!d)return;
+    const b=breadth(d);if(!b)return;
+    sumR.push([cfg.name,b.total,b.valid,b.errors.length,b.above20Pct+'%',b.above50Pct+'%',b.above200Pct+'%',b.nearHigh.length,b.nearLow.length,new Date().toLocaleString()]);
+    const rows=[['Symbol','Price','Change%','SMA20','SMA50','SMA200','Above SMA20','Above SMA50','Above SMA200','52W High','52W Low','Near 52H','Near 52L','Error']];
+    Object.values(d).forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
+      s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
+      s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
+      s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
+      s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[10,10,10,10,10,10,12,12,13,10,10,10,10,30].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb,ws,cfg.name.substring(0,31));
   });
-
-  // Init charts for first tab
-  initCharts(INDICES[0].id);
+  const ws=XLSX.utils.aoa_to_sheet(sumR);
+  ws['!cols']=[22,8,8,8,14,14,15,10,10,20].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,'Summary');
+  XLSX.writeFile(wb,'Index_Breadth_'+new Date().toISOString().split('T')[0]+'.xlsx');
 }
-
-function switchTab(idxId) {
-  INDICES.forEach((idx, i) => {
-    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', idx.id === idxId);
-    document.getElementById('tab-' + idx.id).classList.toggle('active', idx.id === idxId);
+function buildTabs(){
+  const te=document.getElementById('indexTabs'),ce=document.getElementById('tabContents');
+  te.innerHTML='';ce.innerHTML='';
+  CSV_FILES.forEach((cfg,i)=>{
+    const b=document.createElement('button');
+    b.className='tab-btn'+(i===0?' active':'');b.id='tbtn-'+i;
+    b.innerHTML=cfg.name+' <span class="spinner" id="sp-'+i+'" style="display:none"></span>';
+    b.onclick=()=>switchTab(i);te.appendChild(b);
+    const d=document.createElement('div');
+    d.className='tab-content'+(i===0?' active':'');d.id='tab-'+i;
+    d.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Loading...</div>';
+    ce.appendChild(d);
   });
-  initCharts(idxId);
 }
-
-function renderTabContent(idx) {
-  const b = computeBreadth(idx.id);
-  const d = state.indices[idx.id];
-  const period = state.historyPeriod[idx.id] || '1D';
-
-  // Near 52-week high/low lists
-  const nearHighTags = b.nearHigh.map(s => Object.keys(d.stocks).find(k => d.stocks[k] === s)).filter(Boolean);
-  const nearLowTags = b.nearLow.map(s => Object.keys(d.stocks).find(k => d.stocks[k] === s)).filter(Boolean);
-
-  // History cards  
-  const histTypes = ['above20SMA', 'above50SMA', 'above200SMA'];
-  const histLabels = ['Above 20 SMA', 'Above 50 SMA', 'Above 200 SMA'];
-
-  function historyCards() {
-    return histTypes.map((type, ti) => {
-      const data = d.breadthHistory[type];
-      const periods = ['1D','1W','1M','3M'];
-      const cards = periods.map(p => {
-        const arr = data[p];
-        const cur = arr[arr.length - 1];
-        const prev = arr[arr.length - 2] || cur;
-        const chg = (cur - prev).toFixed(1);
-        const chgClass = parseFloat(chg) >= 0 ? 'green' : 'red';
-        const sign = parseFloat(chg) >= 0 ? '+' : '';
-        return `<div class="history-card">
-          <div class="period">${p}</div>
-          <div class="val" style="color:${getColor(cur)}">${cur}%</div>
-          <div class="chg ${chgClass}">${sign}${chg}%</div>
-        </div>`;
-      }).join('');
-      return `<div class="panel" style="margin-bottom:16px">
-        <h3>${histLabels[ti]} — Breadth History</h3>
-        <div class="breadth-history-grid">${cards}</div>
-        <div class="history-tabs" id="htabs-${idx.id}-${type}">
-          ${['1D','1W','1M','3M'].map(p => `<button class="htab ${p === period ? 'active' : ''}" onclick="switchHistPeriod('${idx.id}','${type}','${p}')">${p}</button>`).join('')}
-        </div>
-        <div class="chart-container">
-          <canvas id="chart-${idx.id}-${type}"></canvas>
-        </div>
-      </div>`;
-    }).join('');
+function switchTab(idx){
+  CSV_FILES.forEach((_,i)=>{
+    document.getElementById('tbtn-'+i)?.classList.toggle('active',i===idx);
+    document.getElementById('tab-'+i)?.classList.toggle('active',i===idx);
+  });
+  if(appState.indices[CSV_FILES[idx].name])renderTab(idx);
+}
+function renderTab(idx){
+  const cfg=CSV_FILES[idx];
+  const stocks=appState.indices[cfg.name];
+  if(!stocks)return;
+  const b=breadth(stocks);
+  if(!b){document.getElementById('tab-'+idx).innerHTML='<div class="error-banner"><h4>No data</h4></div>';return;}
+  const hist=JSON.parse(localStorage.getItem('bh_'+cfg.name)||'[]');
+  const period=appState.histPeriod[cfg.name]||'1D';
+  const nhSym=b.nearHigh.map(s=>s.symbol);
+  const nlSym=b.nearLow.map(s=>s.symbol);
+  let errHtml='';
+  if(b.errors.length>0){
+    errHtml='<div class="error-banner"><h4>Data errors for '+b.errors.length+' stocks:</h4><ul class="error-list">'+b.errors.map(e=>'<li title="'+e.error+'">'+e.symbol+'</li>').join('')+'</ul></div>';
   }
-
-  // Top stocks table (first 15)
-  const stockList = Object.entries(d.stocks).slice(0, 20);
-  const tableRows = stockList.map(([sym, s]) => {
-    const chgClass = parseFloat(s.changePct) >= 0 ? 'green' : 'red';
-    const sign = parseFloat(s.changePct) >= 0 ? '+' : '';
-    const smaBadges = [
-      s.aboveSma20 ? '<span class="badge badge-green">20</span>' : '<span class="badge badge-red">20</span>',
-      s.aboveSma50 ? '<span class="badge badge-green">50</span>' : '<span class="badge badge-red">50</span>',
-      s.aboveSma200 ? '<span class="badge badge-green">200</span>' : '<span class="badge badge-red">200</span>'
-    ].join(' ');
-    const highLow = (s.nearHigh ? '<span class="badge badge-green">52H</span>' : '') + (s.nearLow ? ' <span class="badge badge-red">52L</span>' : '');
-    return `<tr>
-      <td><strong>${sym}</strong></td>
-      <td>₹${parseFloat(s.price).toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
-      <td class="${chgClass}">${sign}${s.changePct}%</td>
-      <td>${smaBadges}</td>
-      <td>${highLow || '—'}</td>
-    </tr>`;
+  const rows=Object.values(stocks).map(s=>{
+    const cc=s.changePct>=0?'green':'red';
+    const sg=s.changePct>=0?'+':'';
+    const sb=(lbl,ab)=>ab===null?'<span class="badge badge-gray">'+lbl+'</span>':ab?'<span class="badge badge-green">'+lbl+' YES</span>':'<span class="badge badge-red">'+lbl+' NO</span>';
+    return '<tr><td><strong>'+s.symbol+'</strong></td><td>'+(s.price?'Rs'+s.price:'—')+'</td><td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'—')+'</td><td>'+(s.sma20||'—')+'</td><td>'+(s.sma50||'—')+'</td><td>'+(s.sma200||'—')+'</td><td>'+sb('20',s.aboveSma20)+' '+sb('50',s.aboveSma50)+' '+sb('200',s.aboveSma200)+'</td><td>'+(s.nearHigh?'<span class="badge badge-green">52H</span>':'')+(s.nearLow?' <span class="badge badge-red">52L</span>':'')+'</td><td>'+(s.error?'<span class="badge badge-red" title="'+s.error+'">ERR</span>':'<span class="badge badge-green">OK</span>')+'</td></tr>';
   }).join('');
-
-  return `
-  <div class="section-title">Breadth Summary — ${idx.name} (${b.n} stocks)</div>
-  <div class="cards-row">
-    <div class="card">
-      <div class="label">Above 20 SMA</div>
-      <div class="value" style="color:${getColor(b.above20Pct)}">${b.above20Pct}%</div>
-      <div class="sub">${b.above20} / ${b.n} stocks</div>
-      <div class="bar"><div class="bar-fill" style="width:${b.above20Pct}%;background:${getColor(b.above20Pct)}"></div></div>
-    </div>
-    <div class="card">
-      <div class="label">Above 50 SMA</div>
-      <div class="value" style="color:${getColor(b.above50Pct)}">${b.above50Pct}%</div>
-      <div class="sub">${b.above50} / ${b.n} stocks</div>
-      <div class="bar"><div class="bar-fill" style="width:${b.above50Pct}%;background:${getColor(b.above50Pct)}"></div></div>
-    </div>
-    <div class="card">
-      <div class="label">Above 200 SMA</div>
-      <div class="value" style="color:${getColor(b.above200Pct)}">${b.above200Pct}%</div>
-      <div class="sub">${b.above200} / ${b.n} stocks</div>
-      <div class="bar"><div class="bar-fill" style="width:${b.above200Pct}%;background:${getColor(b.above200Pct)}"></div></div>
-    </div>
-    <div class="card">
-      <div class="label">Near 52W High</div>
-      <div class="value green">${b.nearHigh.length}</div>
-      <div class="sub">${((b.nearHigh.length/b.n)*100).toFixed(1)}% of index</div>
-    </div>
-    <div class="card">
-      <div class="label">Near 52W Low</div>
-      <div class="value red">${b.nearLow.length}</div>
-      <div class="sub">${((b.nearLow.length/b.n)*100).toFixed(1)}% of index</div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="panel">
-      <h3>📈 Stocks Near 52-Week High (within 5%)</h3>
-      <div class="stocks-grid" style="margin-top:8px">
-        ${nearHighTags.length ? nearHighTags.map(s => `<span class="tag tag-high">${s}</span>`).join('') : '<span style="color:var(--text2);font-size:0.85rem">None</span>'}
-      </div>
-    </div>
-    <div class="panel">
-      <h3>📉 Stocks Near 52-Week Low (within 5%)</h3>
-      <div class="stocks-grid" style="margin-top:8px">
-        ${nearLowTags.length ? nearLowTags.map(s => `<span class="tag tag-low">${s}</span>`).join('') : '<span style="color:var(--text2);font-size:0.85rem">None</span>'}
-      </div>
-    </div>
-  </div>
-
-  <div class="section-title" style="margin-top:8px">Breadth History Charts</div>
-  ${historyCards()}
-
-  <div class="section-title" style="margin-top:8px">Stock Details</div>
-  <div class="panel">
-    <h3>Individual Stocks — SMA & 52W Analysis</h3>
-    <div style="overflow-x:auto">
-    <table class="stock-table">
-      <thead><tr>
-        <th>Symbol</th><th>Price</th><th>Change</th><th>SMA Status (20/50/200)</th><th>52W</th>
-      </tr></thead>
-      <tbody>${tableRows}</tbody>
-    </table>
-    </div>
-  </div>
-  `;
+  const histSec=renderHist(idx,cfg.name,hist,period);
+  document.getElementById('tab-'+idx).innerHTML=errHtml+
+    '<div class="section-title">Breadth Summary — '+cfg.name+' ('+b.valid+'/'+b.total+' stocks)</div>'+
+    '<div class="cards-row">'+
+    '<div class="card"><div class="label">Above 20 SMA</div><div class="value" style="color:'+color(b.above20Pct)+'">'+b.above20Pct+'%</div><div class="sub">'+b.above20+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above20Pct+'%;background:'+color(b.above20Pct)+'"></div></div></div>'+
+    '<div class="card"><div class="label">Above 50 SMA</div><div class="value" style="color:'+color(b.above50Pct)+'">'+b.above50Pct+'%</div><div class="sub">'+b.above50+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above50Pct+'%;background:'+color(b.above50Pct)+'"></div></div></div>'+
+    '<div class="card"><div class="label">Above 200 SMA</div><div class="value" style="color:'+color(b.above200Pct)+'">'+b.above200Pct+'%</div><div class="sub">'+b.above200+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above200Pct+'%;background:'+color(b.above200Pct)+'"></div></div></div>'+
+    '<div class="card"><div class="label">Near 52W High</div><div class="value green">'+b.nearHigh.length+'</div><div class="sub">'+((b.nearHigh.length/b.valid)*100).toFixed(1)+'%</div></div>'+
+    '<div class="card"><div class="label">Near 52W Low</div><div class="value red">'+b.nearLow.length+'</div><div class="sub">'+((b.nearLow.length/b.valid)*100).toFixed(1)+'%</div></div>'+
+    '</div>'+
+    '<div class="grid-2">'+
+    '<div class="panel"><h3>Near 52-Week High (within 5%)</h3><div class="tags-wrap">'+(nhSym.length?nhSym.map(s=>'<span class="tag tag-high">'+s+'</span>').join(''):'<span style="color:var(--text2)">None</span>')+'</div></div>'+
+    '<div class="panel"><h3>Near 52-Week Low (within 5%)</h3><div class="tags-wrap">'+(nlSym.length?nlSym.map(s=>'<span class="tag tag-low">'+s+'</span>').join(''):'<span style="color:var(--text2)">None</span>')+'</div></div>'+
+    '</div>'+
+    '<div class="section-title">Breadth History</div>'+histSec+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section-title" style="margin-bottom:0">Stock Details</div>'+
+    '<button class="btn btn-success" onclick='exportExcel("'+cfg.name+'",appState.indices["'+cfg.name+'"])'>Export Excel</button></div>'+
+    '<div class="panel"><h3>Individual Stocks — Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  initCharts(idx,cfg.name,hist,period);
 }
-
-const charts = {};
-
-function initCharts(idxId) {
-  const d = state.indices[idxId];
-  const period = state.historyPeriod[idxId] || '1D';
-  const types = ['above20SMA', 'above50SMA', 'above200SMA'];
-  const colors = ['rgba(108,99,255,1)', 'rgba(34,197,94,1)', 'rgba(245,158,11,1)'];
-  const fillColors = ['rgba(108,99,255,0.15)', 'rgba(34,197,94,0.15)', 'rgba(245,158,11,0.15)'];
-
-  types.forEach((type, ti) => {
-    const canvasId = `chart-${idxId}-${type}`;
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const key = idxId + '-' + type;
-    if (charts[key]) { charts[key].destroy(); }
-    const arr = d.breadthHistory[type][period];
-    const labels = arr.map((_, i) => getPeriodLabel(period, i, arr.length));
-    charts[key] = new Chart(canvas.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Breadth %',
-          data: arr,
-          borderColor: colors[ti],
-          backgroundColor: fillColors[ti],
-          fill: true,
-          tension: 0.4,
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => ctx.parsed.y.toFixed(1) + '%'
-            }
-          }
-        },
-        scales: {
-          x: { grid: { color: 'rgba(45,55,72,0.5)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8, font: { size: 10 } } },
-          y: {
-            grid: { color: 'rgba(45,55,72,0.5)' },
-            ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' },
-            min: 0, max: 100,
-            suggestedMin: 0, suggestedMax: 100
-          }
-        }
-      }
+function renderHist(idx,name,hist,period){
+  const types=[{k:'a20',l:'Above 20 SMA',c:'rgba(108,99,255,1)',f:'rgba(108,99,255,0.15)'},
+               {k:'a50',l:'Above 50 SMA',c:'rgba(34,197,94,1)',f:'rgba(34,197,94,0.15)'},
+               {k:'a200',l:'Above 200 SMA',c:'rgba(245,158,11,1)',f:'rgba(245,158,11,0.15)'}];
+  return types.map(t=>{
+    const periods=['1D','1W','1M','3M'];
+    const cards=periods.map(p=>{
+      const ph=getPH(hist,p);
+      const cur=ph.length?ph[ph.length-1][t.k]:null;
+      const prv=ph.length>1?ph[ph.length-2][t.k]:null;
+      const chg=cur!=null&&prv!=null?(cur-prv).toFixed(1):null;
+      return '<div class="history-card"><div class="period">'+p+'</div><div class="val" style="color:'+(cur!=null?color(cur):'var(--text2)')+'">'+
+        (cur!=null?cur+'%':'—')+'</div>'+(chg!=null?'<div class="chg '+(parseFloat(chg)>=0?'green':'red')+'">'+(parseFloat(chg)>=0?'+':'')+chg+'%</div>':'<div class="chg" style="color:var(--text2)">—</div>')+'</div>';
+    }).join('');
+    const htabs=periods.map(p=>'<button class="htab '+(p===period?'active':'')+'" onclick="switchPeriod('+idx+',(''+name+''),''+t.k+'',''+p+'')">'+p+'</button>').join('');
+    return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' — History</h3><div class="breadth-history-grid">'+cards+'</div><div class="history-tabs" id="ht-'+idx+'-'+t.k+'">'+htabs+'</div><div class="chart-container"><canvas id="ch-'+idx+'-'+t.k+'"></canvas></div></div>';
+  }).join('');
+}
+function initCharts(idx,name,hist,period){
+  const types=[{k:'a20',c:'rgba(108,99,255,1)',f:'rgba(108,99,255,0.15)'},
+               {k:'a50',c:'rgba(34,197,94,1)',f:'rgba(34,197,94,0.15)'},
+               {k:'a200',c:'rgba(245,158,11,1)',f:'rgba(245,158,11,0.15)'}];
+  types.forEach(t=>{
+    const el=document.getElementById('ch-'+idx+'-'+t.k);if(!el)return;
+    const key='ch-'+idx+'-'+t.k;
+    if(appState.charts[key]){try{appState.charts[key].destroy();}catch(e){}}
+    const ph=getPH(hist,period);
+    const labels=ph.map(h=>new Date(h.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}));
+    const data=ph.map(h=>h[t.k]);
+    appState.charts[key]=new Chart(el.getContext('2d'),{
+      type:'line',data:{labels,datasets:[{label:'Breadth %',data,borderColor:t.c,backgroundColor:t.f,fill:true,tension:0.4,pointRadius:data.length>20?1:3,borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y?.toFixed(1)+'%'}}},
+        scales:{x:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',maxTicksLimit:7,font:{size:10}}},
+          y:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'%'},min:0,max:100}}}
     });
   });
 }
-
-function switchHistPeriod(idxId, type, period) {
-  state.historyPeriod[idxId] = period;
-  // Update active button
-  const htabs = document.getElementById(`htabs-${idxId}-${type}`);
-  if (htabs) {
-    htabs.querySelectorAll('.htab').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent === period);
-    });
-  }
-  // Re-render chart for this type only
-  const d = state.indices[idxId];
-  const colors = { above20SMA: 'rgba(108,99,255,1)', above50SMA: 'rgba(34,197,94,1)', above200SMA: 'rgba(245,158,11,1)' };
-  const fills = { above20SMA: 'rgba(108,99,255,0.15)', above50SMA: 'rgba(34,197,94,0.15)', above200SMA: 'rgba(245,158,11,0.15)' };
-  const canvasId = `chart-${idxId}-${type}`;
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const key = idxId + '-' + type;
-  if (charts[key]) charts[key].destroy();
-  const arr = d.breadthHistory[type][period];
-  const labels = arr.map((_, i) => getPeriodLabel(period, i, arr.length));
-  charts[key] = new Chart(canvas.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Breadth %',
-        data: arr,
-        borderColor: colors[type],
-        backgroundColor: fills[type],
-        fill: true,
-        tension: 0.4,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + '%' } }
-      },
-      scales: {
-        x: { grid: { color: 'rgba(45,55,72,0.5)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8, font: { size: 10 } } },
-        y: { grid: { color: 'rgba(45,55,72,0.5)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' }, min: 0, max: 100 }
-      }
-    }
-  });
+function switchPeriod(idx,name,tk,period){
+  appState.histPeriod[name]=period;
+  const hist=JSON.parse(localStorage.getItem('bh_'+name)||'[]');
+  document.querySelectorAll('#ht-'+idx+'-'+tk+' .htab').forEach(b=>b.classList.toggle('active',b.textContent===period));
+  const colors={a20:{c:'rgba(108,99,255,1)',f:'rgba(108,99,255,0.15)'},a50:{c:'rgba(34,197,94,1)',f:'rgba(34,197,94,0.15)'},a200:{c:'rgba(245,158,11,1)',f:'rgba(245,158,11,0.15)'}};
+  const col=colors[tk];
+  const el=document.getElementById('ch-'+idx+'-'+tk);if(!el)return;
+  const key='ch-'+idx+'-'+tk;
+  if(appState.charts[key]){try{appState.charts[key].destroy();}catch(e){}}
+  const ph=getPH(hist,period);
+  const labels=ph.map(h=>new Date(h.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}));
+  const data=ph.map(h=>h[tk]);
+  appState.charts[key]=new Chart(el.getContext('2d'),{type:'line',data:{labels,datasets:[{label:'Breadth %',data,borderColor:col.c,backgroundColor:col.f,fill:true,tension:0.4,pointRadius:data.length>20?1:3,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y?.toFixed(1)+'%'}}},
+      scales:{x:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',maxTicksLimit:7,font:{size:10}}},y:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'%'},min:0,max:100}}}});
 }
-
-// ===================== INIT =====================
-document.addEventListener('DOMContentLoaded', () => {
-  buildTabs();
-  document.getElementById('lastUpdated').textContent = new Date().toLocaleString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-  });
-});
+async function loadIdx(i){
+  const cfg=CSV_FILES[i];
+  const sp=document.getElementById('sp-'+i);if(sp)sp.style.display='inline-block';
+  try{
+    const cr=await fetch(DATA_BASE+encodeURIComponent(cfg.file));
+    if(!cr.ok)throw new Error('CSV HTTP '+cr.status);
+    const syms=parseCSV(await cr.text(),cfg.indexKey);
+    if(!syms.length)throw new Error('No symbols in CSV');
+    document.getElementById('tab-'+i).innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><div class="spinner" style="width:24px;height:24px;border-width:3px;margin:0 auto 12px"></div>Loading '+syms.length+' stocks...<br><small id="pr-'+i+'">0/'+syms.length+'</small></div>';
+    const quotes=await fetchAll(syms,(done,total)=>{
+      const el=document.getElementById('pr-'+i);if(el)el.textContent=done+'/'+total;
+      document.getElementById('loadingBar').style.width=(done/total*100)+'%';
+    });
+    appState.indices[cfg.name]=quotes;
+    const b=breadth(quotes);
+    if(b)recHist(cfg.name,b);
+    renderTab(i);
+  }catch(e){
+    document.getElementById('tab-'+i).innerHTML='<div class="error-banner"><h4>Failed: '+cfg.name+'</h4>'+e.message+'</div>';
+  }finally{if(sp)sp.style.display='none';}
+}
+async function refreshAll(){
+  document.getElementById('loadingBar').style.width='0%';
+  for(let i=0;i<CSV_FILES.length;i++)await loadIdx(i);
+  document.getElementById('loadingBar').style.width='100%';
+  document.getElementById('lastUpdated').textContent=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  setTimeout(()=>{document.getElementById('loadingBar').style.width='0%';},2000);
+}
+window.addEventListener('DOMContentLoaded',()=>{buildTabs();refreshAll();});
 </script>
 </body>
 </html>
