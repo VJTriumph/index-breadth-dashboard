@@ -64,8 +64,13 @@ def fetch_one(symbol):
         if len(closes) < 5:
             return {"symbol": symbol, "error": "Insufficient closes"}
 
-        price   = float(closes.iloc[-1])
-        prev    = float(closes.iloc[-2])
+        # Use fast_info for live last-traded price; fall back to last daily close
+        prev    = float(closes.iloc[-1])   # always yesterday's completed close
+        try:
+            live = tk.fast_info.get("last_price") or tk.fast_info.get("regularMarketPrice")
+            price = round(float(live), 2) if live else prev
+        except Exception:
+            price = prev
         chgPct  = round((price - prev) / prev * 100, 2)
         high52  = round(float(closes.max()), 2)
         low52   = round(float(closes.min()), 2)
