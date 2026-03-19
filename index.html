@@ -89,10 +89,10 @@ header h1{font-size:1.3rem;font-weight:700;color:var(--accent);}
 const JSON_URL = 'https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/breadth.json';
 const appState = { data: null, charts: {}, histPeriod: {} };
 
-// Ã¢ÂÂÃ¢ÂÂ BREADTH COLOR Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ BREADTH COLOR ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function color(p){ return p>=60?'var(--green)':p>=40?'var(--yellow)':'var(--red)'; }
 
-// Ã¢ÂÂÃ¢ÂÂ EXCEL EXPORT Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ EXCEL EXPORT ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function exportExcel(name, stocks){
   const rows=[['Symbol','Price','Change%','SMA20','SMA50','SMA200','Above SMA20','Above SMA50','Above SMA200','52W High','52W Low','Near 52W High','Near 52W Low','Error']];
   stocks.forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
@@ -130,7 +130,7 @@ function exportAllExcel(){
   XLSX.writeFile(wb,'Index_Breadth_'+new Date().toISOString().split('T')[0]+'.xlsx');
 }
 
-// ââ CSV EXPORT â raw data for manual cross-check ââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ CSV EXPORT Ã¢ÂÂ raw data for manual cross-check Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function exportCSV(name, stocks){
   const updatedAt=appState.data?.updatedAt||new Date().toISOString();
   const header=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200',
@@ -175,7 +175,7 @@ function exportAllCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-// Ã¢ÂÂÃ¢ÂÂ TABS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ TABS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function buildTabs(names){
   const te=document.getElementById('indexTabs'), ce=document.getElementById('tabContents');
   te.innerHTML=''; ce.innerHTML='';
@@ -199,7 +199,7 @@ function switchTab(idx,names){
   if(appState.data?.indices[name]) renderTab(idx,name);
 }
 
-// Ã¢ÂÂÃ¢ÂÂ HISTORY HELPERS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ HISTORY HELPERS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function getPH(hist, period){
   const ms={'1D':864e5,'1W':7*864e5,'1M':30*864e5,'3M':90*864e5};
   const cut=Date.now()-(ms[period]||ms['1M']);
@@ -209,7 +209,7 @@ function getPH(hist, period){
   });
 }
 
-// Ã¢ÂÂÃ¢ÂÂ RENDER TAB Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ RENDER TAB ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function renderTab(idx, name){
   const idxData = appState.data.indices[name];
   if(!idxData){ document.getElementById('tab-'+idx).innerHTML='<div class="error-banner"><h4>No data for '+name+'</h4></div>'; return; }
@@ -233,18 +233,19 @@ function renderTab(idx, name){
     const sg=s.changePct>=0?'+':'';
     const sb=(lbl,ab)=>ab===null||ab===undefined?'<span class="badge badge-gray">'+lbl+'</span>':ab?'<span class="badge badge-green">'+lbl+' YES</span>':'<span class="badge badge-red">'+lbl+' NO</span>';
     return '<tr><td><strong>'+s.symbol+'</strong></td>'
-      +'<td>'+(s.price?'Rs'+s.price:'Ã¢ÂÂ')+'</td>'
-      +'<td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'Ã¢ÂÂ')+'</td>'
-      +'<td>'+(s.sma20||'Ã¢ÂÂ')+'</td><td>'+(s.sma50||'Ã¢ÂÂ')+'</td><td>'+(s.sma200||'Ã¢ÂÂ')+'</td>'
+      +'<td>'+(s.price?'Rs'+s.price:'ÃÂ¢ÃÂÃÂ')+'</td>'
+      +'<td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'ÃÂ¢ÃÂÃÂ')+'</td>'
+      +'<td>'+(s.sma20||'ÃÂ¢ÃÂÃÂ')+'</td><td>'+(s.sma50||'ÃÂ¢ÃÂÃÂ')+'</td><td>'+(s.sma200||'ÃÂ¢ÃÂÃÂ')+'</td>'
       +'<td>'+sb('20',s.aboveSma20)+' '+sb('50',s.aboveSma50)+' '+sb('200',s.aboveSma200)+'</td>'
       +'<td>'+(s.nearHigh?'<span class="badge badge-green">52H</span>':'')+(s.nearLow?' <span class="badge badge-red">52L</span>':'')+'</td>'
       +'<td>'+(s.error?'<span class="badge badge-red" title="'+s.error+'">ERR</span>':'<span class="badge badge-green">OK</span>')+'</td></tr>';
   }).join('');
 
-  const histSec = renderHistSection(idx, name, hist, period);
+  const histBreadth = idxData.breadth?.histBreadth || {};
+  const histSec = renderHistSection(idx, name, hist, period, histBreadth);
 
   document.getElementById('tab-'+idx).innerHTML = errHtml
-    +'<div class="section-title">Breadth Summary Ã¢ÂÂ '+name+' ('+b.valid+'/'+b.total+' stocks)</div>'
+    +'<div class="section-title">Breadth Summary ÃÂ¢ÃÂÃÂ '+name+' ('+b.valid+'/'+b.total+' stocks)</div>'
     +'<div class="cards-row">'
     +'<div class="card"><div class="label">Above 20 SMA</div><div class="value" style="color:'+color(b.above20Pct)+'">'+b.above20Pct+'%</div><div class="sub">'+b.above20+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above20Pct+'%;background:'+color(b.above20Pct)+'"></div></div></div>'
     +'<div class="card"><div class="label">Above 50 SMA</div><div class="value" style="color:'+color(b.above50Pct)+'">'+b.above50Pct+'%</div><div class="sub">'+b.above50+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above50Pct+'%;background:'+color(b.above50Pct)+'"></div></div></div>'
@@ -261,12 +262,14 @@ function renderTab(idx, name){
     +'<div class="section-title" style="margin-bottom:0">Stock Details</div>'
     +'<button class="btn btn-success" onclick="exportCSV(\'' +name+ '\',appState.data.indices[\'' +name+ '\'].stocks)" style="margin-right:8px">Export CSV</button>'
     +'<button class="btn btn-success" onclick="exportExcel(\'' +name+ '\',appState.data.indices[\'' +name+ '\'].stocks)">Export Excel</button></div>'
-    +'<div class="panel"><h3>Individual Stocks Ã¢ÂÂ Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    +'<div class="panel"><h3>Individual Stocks ÃÂ¢ÃÂÃÂ Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 
   initCharts(idx, name, hist, period);
 }
 
-function renderHistSection(idx, name, hist, period){
+function renderHistSection(idx, name, hist, period, histBreadth){
+  histBreadth = histBreadth || {};
+  const keyMap = {a20:'above20Pct', a50:'above50Pct', a200:'above200Pct'};
   const types=[
     {k:'a20',l:'Above 20 SMA',c:'rgba(108,99,255,1)',f:'rgba(108,99,255,0.15)'},
     {k:'a50',l:'Above 50 SMA',c:'rgba(34,197,94,1)',f:'rgba(34,197,94,0.15)'},
@@ -274,23 +277,26 @@ function renderHistSection(idx, name, hist, period){
   ];
   return types.map(t=>{
     const periods=['1D','1W','1M','3M'];
+    const ph=getPH(hist,'3M');
+    const cur=ph.length?ph[ph.length-1][t.k]:null;
+    const jsonKey=keyMap[t.k];
     const cards=periods.map(p=>{
-      const ph=getPH(hist,p);
-      const cur=ph.length?ph[ph.length-1][t.k]:null;
-      const prv=ph.length>1?ph[0][t.k]:null;
-      const chg=cur!=null&&prv!=null?(cur-prv).toFixed(1):null;
+      const hb=histBreadth[p];
+      const pastVal=hb?hb[jsonKey]:null;
+      const chg=(cur!=null&&pastVal!=null)?(cur-pastVal).toFixed(1):null;
       return '<div class="history-card"><div class="period">'+p+'</div>'
-        +'<div class="val" style="color:'+(cur!=null?color(cur):'var(--text2)')+'">'+(cur!=null?cur+'%':'Ã¢ÂÂ')+'</div>'
-        +(chg!=null?'<div class="chg '+(parseFloat(chg)>=0?'green':'red')+'">'+(parseFloat(chg)>=0?'+':'')+chg+'%</div>':'<div class="chg" style="color:var(--text2)">Ã¢ÂÂ</div>')
+        +'<div class="val" style="color:'+(cur!=null?color(cur):'var(--text2)')+'">'+(cur!=null?cur+'%':'\u2014')+'</div>'
+        +(chg!=null?'<div class="chg '+(parseFloat(chg)>=0?'green':'red')+'">'+(parseFloat(chg)>=0?'+':'')+chg+'%</div><div class="chg" style="font-size:0.65rem;color:var(--text2)">was '+pastVal+'%</div>':'<div class="chg" style="color:var(--text2)">\u2014</div>')
         +'</div>';
     }).join('');
-    const htabs=periods.map(p=>'<button class="htab '+(p===period?'active':'')+'" onclick="switchPeriod('+idx+',\'' +name+ '\',\'' +t.k+ '\',\'' +p+ '\')">'+p+'</button>').join('');
-    return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' Ã¢ÂÂ History</h3>'
+    const htabs=periods.map(p=>'<button class="htab '+(p===period?'active':'')+'" onclick="switchPeriod('+idx+',\''+name+'\',\''+t.k+'\',\''+p+'\')">'+p+'</button>').join('');
+    return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' — History</h3>'
       +'<div class="breadth-history-grid">'+cards+'</div>'
       +'<div class="history-tabs" id="ht-'+idx+'-'+t.k+'">'+htabs+'</div>'
       +'<div class="chart-container"><canvas id="ch-'+idx+'-'+t.k+'"></canvas></div></div>';
   }).join('');
 }
+
 
 function initCharts(idx, name, hist, period){
   const types=[
@@ -338,7 +344,7 @@ function switchPeriod(idx, name, tk, period){
   appState.charts[key]=new Chart(el.getContext('2d'),{type:'line',data:{labels,datasets:[{label:'Breadth %',data,borderColor:col.c,backgroundColor:col.f,fill:true,tension:0.4,pointRadius:data.length>20?1:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y?.toFixed(1)+'%'}}},scales:{x:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',maxTicksLimit:7,font:{size:10}}},y:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'%'},min:0,max:100}}}});
 }
 
-// Ã¢ÂÂÃ¢ÂÂ LOAD DATA FROM JSON Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ LOAD DATA FROM JSON ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 async function loadDashboard(){
   document.getElementById('loadingBar').style.width='30%';
   try{
@@ -384,7 +390,7 @@ async function loadDashboard(){
       '<div style="padding:20px"><div class="error-banner">'
       +'<h4>Failed to load breadth data</h4>'
       +e.message
-      +'<br><small style="margin-top:8px;display:block;color:var(--text2)">The GitHub Actions workflow runs at 9:00 AM and 3:30 PM IST on weekdays. Data may not be available yet Ã¢ÂÂ please check back after market open.</small>'
+      +'<br><small style="margin-top:8px;display:block;color:var(--text2)">The GitHub Actions workflow runs at 9:00 AM and 3:30 PM IST on weekdays. Data may not be available yet ÃÂ¢ÃÂÃÂ please check back after market open.</small>'
       +'</div></div>';
   }
 }
