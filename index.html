@@ -98,37 +98,48 @@ const CSV_FILES=[
 const DATA_BASE='https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/';
 const appState={indices:{},charts:{},histPeriod:{}};
 function parseCSV(text,indexKey){
-  const lines=text.trim().split(/\r?\n/)
-  if(lines.length<2)return[];
-  const vals=lines[1].split(',').slice(1);
-  const suffix=' '+indexKey;
-  return [...new Set(vals.map(v=>{
-    v=v.trim().replace(/"/g,'');
-    return v.toUpperCase().endsWith(indexKey)?v.slice(0,v.length-suffix.length).trim():v.split(' ')[0].trim();
-  }).filter(s=>s.length>0&&s!=='STOCKS'))];
+const lines=text.trim().split(/\r?\n/);
+if(lines.length<2)return[];
+const symbols=[];
+for(let i=1;i<lines.length;i++){
+const cols=lines[i].split(',');
+if(cols.length>=2){
+let sym=cols[1].trim().replace(/"/g,'').toUpperCase();
+if(sym&&sym!=='STOCKS'&&sym!=='INDEX'&&sym.length>1)symbols.push(sym);
+}
+}
+return[...new Set(symbols)];
 }
 async function fetchQuote(symbol){
-  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(symbol+'.NS')+'?interval=1d&range=1y';
-  try{
-    const r=await fetch(url,{headers:{Accept:'application/json'}});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const j=await r.json();
-    const res=j?.chart?.result?.[0];
-    if(!res)throw new Error('No data');
-    const closes=(res.indicators?.quote?.[0]?.close||[]).filter(c=>c!=null);
-    if(closes.length<5)throw new Error('Insufficient data');
-    const price=res.meta.regularMarketPrice||closes[closes.length-1];
-    const prev=res.meta.previousClose||closes[closes.length-2]||price;
-    const chg=price-prev,chgPct=(chg/prev)*100;
-    const high52=Math.max(...closes),low52=Math.min(...closes);
-    function sma(n){if(closes.length<n)return null;return closes.slice(-n).reduce((a,b)=>a+b,0)/n;}
-    const s20=sma(20),s50=sma(50),s200=sma(200);
-    return{symbol,price:+price.toFixed(2),changePct:+chgPct.toFixed(2),
-      sma20:s20?+s20.toFixed(2):null,sma50:s50?+s50.toFixed(2):null,sma200:s200?+s200.toFixed(2):null,
-      aboveSma20:s20?price>s20:null,aboveSma50:s50?price>s50:null,aboveSma200:s200?price>s200:null,
-      high52:+high52.toFixed(2),low52:+low52.toFixed(2),
-      nearHigh:price/high52>=0.95,nearLow:price<=low52*1.05,error:null};
-  }catch(e){return{symbol,error:e.message,price:null,changePct:null,aboveSma20:null,aboveSma50:null,aboveSma200:null,nearHigh:false,nearLow:false};}
+const ns=symbol+'.NS';
+const yUrls=[
+'https://corsproxy.io/?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y'),
+'https://corsproxy.io/?url='+encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y'),
+'https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+ns+'?interval=1d&range=1y')
+];
+for(const url of yUrls){
+try{
+const r=await fetch(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(15000)});
+if(!r.ok)continue;
+const j=await r.json();
+const res=j?.chart?.result?.[0];
+if(!res)continue;
+const closes=(res.indicators?.quote?.[0]?.close||[]).filter(c=>c!=null);
+if(closes.length<5)continue;
+const price=res.meta.regularMarketPrice||closes[closes.length-1];
+const prev=res.meta.previousClose||closes[closes.length-2]||price;
+const chg=price-prev,chgPct=(chg/prev)*100;
+const high52=Math.max(...closes),low52=Math.min(...closes);
+function sma(n){if(closes.length<n)return null;return closes.slice(-n).reduce((a,b)=>a+b,0)/n;}
+const s20=sma(20),s50=sma(50),s200=sma(200);
+return{symbol,price:+price.toFixed(2),changePct:+chgPct.toFixed(2),
+sma20:s20?+s20.toFixed(2):null,sma50:s50?+s50.toFixed(2):null,sma200:s200?+s200.toFixed(2):null,
+aboveSma20:s20?price>s20:null,aboveSma50:s50?price>s50:null,aboveSma200:s200?price>s200:null,
+high52:+high52.toFixed(2),low52:+low52.toFixed(2),
+nearHigh:price/high52>=0.95,nearLow:price<=low52*1.05,error:null};
+}catch(e){continue;}
+}
+return{symbol,error:'All sources failed',price:null,changePct:null,aboveSma20:null,aboveSma50:null,aboveSma200:null,nearHigh:false,nearLow:false};
 }
 async function fetchAll(syms,onProg){
   const res={};
