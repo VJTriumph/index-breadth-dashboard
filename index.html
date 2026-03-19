@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Index Breadth Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #252836;
+    --accent: #6c63ff;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --border: #2d3748;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+  header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  header span { font-size: 0.85rem; color: var(--text2); }
+  .last-updated { margin-left: auto; font-size: 0.8rem; color: var(--text2); }
+  .tabs-wrapper { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 4px; }
+  .tab-btn { padding: 12px 20px; border: none; background: none; color: var(--text2); cursor: pointer; font-size: 0.9rem; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 500; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; padding: 24px; }
+  .tab-content.active { display: block; }
+  .section-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .section-title::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
+  .cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+  .card .label { font-size: 0.8rem; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .value { font-size: 2rem; font-weight: 700; }
+  .card .sub { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
+  .card .bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 12px; overflow: hidden; }
+  .card .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .yellow { color: var(--yellow); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .panel h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 16px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .history-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .htab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text2); cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+  .htab.active, .htab:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .chart-container { position: relative; height: 200px; }
+  .stock-table { width: 100%; border-collapse: collapse; }
+  .stock-table th { font-size: 0.75rem; color: var(--text2); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  .stock-table td { padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid rgba(45,55,72,0.5); }
+  .stock-table tr:last-child td { border-bottom: none; }
+  .stock-table tr:hover td { background: var(--bg3); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .breadth-gauge { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
+  .gauge-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; border: 6px solid; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(45,55,72,0.5); }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { font-size: 0.85rem; color: var(--text2); }
+  .summary-val { font-size: 0.9rem; font-weight: 600; }
+  .stocks-near { font-size: 0.8rem; }
+  .tag { display: inline-block; padding: 2px 6px; border-radius: 3px; margin: 1px; font-size: 0.72rem; }
+  .tag-high { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .tag-low { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .input-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .add-stock-input { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; flex: 1; min-width: 120px; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .breadth-history-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .history-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .history-card .period { font-size: 0.75rem; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; }
+  .history-card .val { font-size: 1.4rem; font-weight: 700; }
+  .history-card .chg { font-size: 0.75rem; margin-top: 4px; }
+  .stocks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
+  .stock-chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; }
+  .stock-chip .del-btn { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 0.9rem; padding: 0 2px; }
+  .stock-chip .del-btn:hover { color: var(--red); }
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .cards-row { grid-template-columns: repeat(2, 1fr); }
+    .breadth-history-grid { grid-template-columns: repeat(2, 1fr); }
+    .tabs-wrapper { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Index Breadth Dashboard</h1>
+  <span>Market Health Monitor</span>
+  <div class="last-updated">Last updated: <span id="lastUpdated">—</span></div>
+</header>
+<div class="tabs-wrapper" id="indexTabs"></div>
+<div id="tabContents"></div>
+
+<script>
+// ===================== CONFIG =====================
+const INDICES = [
+  {
+    id: 'nifty50',
+    name: 'Nifty 50',
+    stocks: ['RELIANCE','TCS','INFY','HDFCBANK','ICICIBANK','WIPRO','LT','HCLTECH','KOTAKBANK','AXISBANK',
+             'ITC','SBIN','BAJFINANCE','BHARTIARTL','ASIANPAINT','MARUTI','NESTLEIND','POWERGRID','NTPC','TECHM',
+             'ULTRACEMCO','SUNPHARMA','TITAN','ADANIENT','HINDUNILVR','BAJAJFINSV','DIVISLAB','CIPLA','DRREDDY','EICHERMOT',
+             'BPCL','GRASIM','HDFCLIFE','HEROMOTOCO','HINDALCO','INDUSINDBK','JSWSTEEL','LTIM','ONGC','SBILIFE',
+             'TATACONSUM','TATAMOTORS','TATASTEEL','TRENT','UPL','VEDL','BRITANNIA','COALINDIA','APOLLOHOSP','ADANIPORTS']
+  },
+  {
+    id: 'niftybank',
+    name: 'Nifty Bank',
+    stocks: ['HDFCBANK','ICICIBANK','KOTAKBANK','AXISBANK','SBIN','INDUSINDBK','BANDHANBNK','FEDERALBNK','PNB','IDFCFIRSTB',
+             'AUBANK','RBLBANK']
+  },
+  {
+    id: 'niftyit',
+    name: 'Nifty IT',
+    stocks: ['TCS','INFY','WIPRO','HCLTECH','TECHM','LTIM','MPHASIS','COFORGE','PERSISTENT','LTTS']
+  },
+  {
+    id: 'niftymidcap',
+    name: 'Nifty Midcap 150',
+    stocks: ['ABCAPITAL','AARTIIND','APLAPOLLO','ASTRAL','BAJAJHFL','BALKRISIND','BATAINDIA','BERGEPAINT','BIOCON','BSOFT',
+             'CANFINHOME','CASTROLIND','CEATLTD','CHOLAFIN','CUB','CUMMINSIND','DABUR','DALMIACEME','DEEPAKNTR','DIXON',
+             'ELGIEQUIP','ESCORTS','EXIDEIND','GLENMARK','GLAXO','GNFC','GODREJPROP','GPPL','GUJGASLTD','HAPPSTMNDS',
+             'HFCL','IEX','INDIAMART','INDIACEM','INOXWIND','JKCEMENT','JUBLFOOD','KALYANKJIL','KANSAINER','KFINTECH',
+             'LICHSGFIN','LICI','LUPIN','MARICO','MAXHEALTH','MCX','MFSL','MOTILALOFS','MUTHOOTFIN','NATIONALUM']
+  }
+];
+
+// ===================== STATE =====================
+const state = {
+  indices: {},
+  historyPeriod: {}
+};
+
+// Initialize state for each index
+INDICES.forEach(idx => {
+  state.indices[idx.id] = generateMockData(idx.stocks);
+  state.historyPeriod[idx.id] = '1D';
+});
+
+// ===================== MOCK DATA GENERATOR =====================
+function generateMockData(stocks) {
+  const n = stocks.length;
+  const data = {
+    stocks: {},
+    breadthHistory: {
+      above20SMA: { '1D': [], '1W': [], '1M': [], '3M': [] },
+      above50SMA: { '1D': [], '1W': [], '1M': [], '3M': [] },
+      above200SMA: { '1D': [], '1W': [], '1M': [], '3M': [] }
+    }
+  };
+
+  stocks.forEach(s => {
+    const price = 100 + Math.random() * 4900;
+    const high52 = price * (1 + Math.random() * 0.3);
+    const low52 = price * (0.6 + Math.random() * 0.2);
+    const sma20 = price * (0.92 + Math.random() * 0.16);
+    const sma50 = price * (0.88 + Math.random() * 0.2);
+    const sma200 = price * (0.78 + Math.random() * 0.28);
+    const change = (Math.random() - 0.48) * 6;
+    data.stocks[s] = {
+      price: price.toFixed(2),
+      change: change.toFixed(2),
+      changePct: ((change / price) * 100).toFixed(2),
+      sma20: sma20.toFixed(2),
+      sma50: sma50.toFixed(2),
+      sma200: sma200.toFixed(2),
+      high52: high52.toFixed(2),
+      low52: low52.toFixed(2),
+      aboveSma20: price > sma20,
+      aboveSma50: price > sma50,
+      aboveSma200: price > sma200,
+      nearHigh: (price / high52) >= 0.95,
+      nearLow: (price / low52) <= 1.05
+    };
+  });
+
+  // Generate history data (30 data points each)
+  ['above20SMA', 'above50SMA', 'above200SMA'].forEach(type => {
+    const baseVal = 40 + Math.random() * 40;
+    Object.keys(data.breadthHistory[type]).forEach(period => {
+      const points = period === '1D' ? 30 : period === '1W' ? 30 : period === '1M' ? 30 : 30;
+      const arr = [];
+      let val = baseVal + (Math.random() - 0.5) * 20;
+      for (let i = 0; i < points; i++) {
+        val = Math.max(5, Math.min(95, val + (Math.random() - 0.5) * 8));
+        arr.push(parseFloat(val.toFixed(1)));
+      }
+      data.breadthHistory[type][period] = arr;
+    });
+  });
+
+  return data;
+}
+
+function computeBreadth(idxId) {
+  const d = state.indices[idxId];
+  const stocks = Object.values(d.stocks);
+  const n = stocks.length;
+  const above20 = stocks.filter(s => s.aboveSma20).length;
+  const above50 = stocks.filter(s => s.aboveSma50).length;
+  const above200 = stocks.filter(s => s.aboveSma200).length;
+  const nearHigh = stocks.filter(s => s.nearHigh);
+  const nearLow = stocks.filter(s => s.nearLow);
+  return {
+    n, above20, above50, above200,
+    above20Pct: ((above20/n)*100).toFixed(1),
+    above50Pct: ((above50/n)*100).toFixed(1),
+    above200Pct: ((above200/n)*100).toFixed(1),
+    nearHigh, nearLow
+  };
+}
+
+function getPeriodLabel(period, i, total) {
+  const now = new Date();
+  if (period === '1D') {
+    const t = new Date(now - (total - 1 - i) * 30 * 60 * 1000);
+    return t.getHours().toString().padStart(2,'0') + ':' + t.getMinutes().toString().padStart(2,'0');
+  } else if (period === '1W') {
+    const t = new Date(now - (total - 1 - i) * 24 * 60 * 60 * 1000);
+    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][t.getDay()];
+  } else if (period === '1M') {
+    const t = new Date(now - (total - 1 - i) * 24 * 60 * 60 * 1000);
+    return (t.getMonth()+1) + '/' + t.getDate();
+  } else {
+    const t = new Date(now - (total - 1 - i) * 3 * 24 * 60 * 60 * 1000);
+    return (t.getMonth()+1) + '/' + t.getDate();
+  }
+}
+
+function getColor(pct) {
+  const v = parseFloat(pct);
+  if (v >= 60) return 'var(--green)';
+  if (v >= 40) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+function getBadgeClass(pct) {
+  const v = parseFloat(pct);
+  if (v >= 60) return 'badge-green';
+  if (v >= 40) return 'badge-yellow';
+  return 'badge-red';
+}
+
+// ===================== RENDER =====================
+function buildTabs() {
+  const tabsEl = document.getElementById('indexTabs');
+  const contentsEl = document.getElementById('tabContents');
+  tabsEl.innerHTML = '';
+  contentsEl.innerHTML = '';
+
+  INDICES.forEach((idx, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = idx.name;
+    btn.onclick = () => switchTab(idx.id);
+    tabsEl.appendChild(btn);
+
+    const div = document.createElement('div');
+    div.className = 'tab-content' + (i === 0 ? ' active' : '');
+    div.id = 'tab-' + idx.id;
+    div.innerHTML = renderTabContent(idx);
+    contentsEl.appendChild(div);
+  });
+
+  // Init charts for first tab
+  initCharts(INDICES[0].id);
+}
+
+function switchTab(idxId) {
+  INDICES.forEach((idx, i) => {
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', idx.id === idxId);
+    document.getElementById('tab-' + idx.id).classList.toggle('active', idx.id === idxId);
+  });
+  initCharts(idxId);
+}
+
+function renderTabContent(idx) {
+  const b = computeBreadth(idx.id);
+  const d = state.indices[idx.id];
+  const period = state.historyPeriod[idx.id] || '1D';
+
+  // Near 52-week high/low lists
+  const nearHighTags = b.nearHigh.map(s => Object.keys(d.stocks).find(k => d.stocks[k] === s)).filter(Boolean);
+  const nearLowTags = b.nearLow.map(s => Object.keys(d.stocks).find(k => d.stocks[k] === s)).filter(Boolean);
+
+  // History cards  
+  const histTypes = ['above20SMA', 'above50SMA', 'above200SMA'];
+  const histLabels = ['Above 20 SMA', 'Above 50 SMA', 'Above 200 SMA'];
+
+  function historyCards() {
+    return histTypes.map((type, ti) => {
+      const data = d.breadthHistory[type];
+      const periods = ['1D','1W','1M','3M'];
+      const cards = periods.map(p => {
+        const arr = data[p];
+        const cur = arr[arr.length - 1];
+        const prev = arr[arr.length - 2] || cur;
+        const chg = (cur - prev).toFixed(1);
+        const chgClass = parseFloat(chg) >= 0 ? 'green' : 'red';
+        const sign = parseFloat(chg) >= 0 ? '+' : '';
+        return `<div class="history-card">
+          <div class="period">${p}</div>
+          <div class="val" style="color:${getColor(cur)}">${cur}%</div>
+          <div class="chg ${chgClass}">${sign}${chg}%</div>
+        </div>`;
+      }).join('');
+      return `<div class="panel" style="margin-bottom:16px">
+        <h3>${histLabels[ti]} — Breadth History</h3>
+        <div class="breadth-history-grid">${cards}</div>
+        <div class="history-tabs" id="htabs-${idx.id}-${type}">
+          ${['1D','1W','1M','3M'].map(p => `<button class="htab ${p === period ? 'active' : ''}" onclick="switchHistPeriod('${idx.id}','${type}','${p}')">${p}</button>`).join('')}
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-${idx.id}-${type}"></canvas>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Top stocks table (first 15)
+  const stockList = Object.entries(d.stocks).slice(0, 20);
+  const tableRows = stockList.map(([sym, s]) => {
+    const chgClass = parseFloat(s.changePct) >= 0 ? 'green' : 'red';
+    const sign = parseFloat(s.changePct) >= 0 ? '+' : '';
+    const smaBadges = [
+      s.aboveSma20 ? '<span class="badge badge-green">20</span>' : '<span class="badge badge-red">20</span>',
+      s.aboveSma50 ? '<span class="badge badge-green">50</span>' : '<span class="badge badge-red">50</span>',
+      s.aboveSma200 ? '<span class="badge badge-green">200</span>' : '<span class="badge badge-red">200</span>'
+    ].join(' ');
+    const highLow = (s.nearHigh ? '<span class="badge badge-green">52H</span>' : '') + (s.nearLow ? ' <span class="badge badge-red">52L</span>' : '');
+    return `<tr>
+      <td><strong>${sym}</strong></td>
+      <td>₹${parseFloat(s.price).toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
+      <td class="${chgClass}">${sign}${s.changePct}%</td>
+      <td>${smaBadges}</td>
+      <td>${highLow || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+  <div class="section-title">Breadth Summary — ${idx.name} (${b.n} stocks)</div>
+  <div class="cards-row">
+    <div class="card">
+      <div class="label">Above 20 SMA</div>
+      <div class="value" style="color:${getColor(b.above20Pct)}">${b.above20Pct}%</div>
+      <div class="sub">${b.above20} / ${b.n} stocks</div>
+      <div class="bar"><div class="bar-fill" style="width:${b.above20Pct}%;background:${getColor(b.above20Pct)}"></div></div>
+    </div>
+    <div class="card">
+      <div class="label">Above 50 SMA</div>
+      <div class="value" style="color:${getColor(b.above50Pct)}">${b.above50Pct}%</div>
+      <div class="sub">${b.above50} / ${b.n} stocks</div>
+      <div class="bar"><div class="bar-fill" style="width:${b.above50Pct}%;background:${getColor(b.above50Pct)}"></div></div>
+    </div>
+    <div class="card">
+      <div class="label">Above 200 SMA</div>
+      <div class="value" style="color:${getColor(b.above200Pct)}">${b.above200Pct}%</div>
+      <div class="sub">${b.above200} / ${b.n} stocks</div>
+      <div class="bar"><div class="bar-fill" style="width:${b.above200Pct}%;background:${getColor(b.above200Pct)}"></div></div>
+    </div>
+    <div class="card">
+      <div class="label">Near 52W High</div>
+      <div class="value green">${b.nearHigh.length}</div>
+      <div class="sub">${((b.nearHigh.length/b.n)*100).toFixed(1)}% of index</div>
+    </div>
+    <div class="card">
+      <div class="label">Near 52W Low</div>
+      <div class="value red">${b.nearLow.length}</div>
+      <div class="sub">${((b.nearLow.length/b.n)*100).toFixed(1)}% of index</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📈 Stocks Near 52-Week High (within 5%)</h3>
+      <div class="stocks-grid" style="margin-top:8px">
+        ${nearHighTags.length ? nearHighTags.map(s => `<span class="tag tag-high">${s}</span>`).join('') : '<span style="color:var(--text2);font-size:0.85rem">None</span>'}
+      </div>
+    </div>
+    <div class="panel">
+      <h3>📉 Stocks Near 52-Week Low (within 5%)</h3>
+      <div class="stocks-grid" style="margin-top:8px">
+        ${nearLowTags.length ? nearLowTags.map(s => `<span class="tag tag-low">${s}</span>`).join('') : '<span style="color:var(--text2);font-size:0.85rem">None</span>'}
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:8px">Breadth History Charts</div>
+  ${historyCards()}
+
+  <div class="section-title" style="margin-top:8px">Stock Details</div>
+  <div class="panel">
+    <h3>Individual Stocks — SMA & 52W Analysis</h3>
+    <div style="overflow-x:auto">
+    <table class="stock-table">
+      <thead><tr>
+        <th>Symbol</th><th>Price</th><th>Change</th><th>SMA Status (20/50/200)</th><th>52W</th>
+      </tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    </div>
+  </div>
+  `;
+}
+
+const charts = {};
+
+function initCharts(idxId) {
+  const d = state.indices[idxId];
+  const period = state.historyPeriod[idxId] || '1D';
+  const types = ['above20SMA', 'above50SMA', 'above200SMA'];
+  const colors = ['rgba(108,99,255,1)', 'rgba(34,197,94,1)', 'rgba(245,158,11,1)'];
+  const fillColors = ['rgba(108,99,255,0.15)', 'rgba(34,197,94,0.15)', 'rgba(245,158,11,0.15)'];
+
+  types.forEach((type, ti) => {
+    const canvasId = `chart-${idxId}-${type}`;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const key = idxId + '-' + type;
+    if (charts[key]) { charts[key].destroy(); }
+    const arr = d.breadthHistory[type][period];
+    const labels = arr.map((_, i) => getPeriodLabel(period, i, arr.length));
+    charts[key] = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Breadth %',
+          data: arr,
+          borderColor: colors[ti],
+          backgroundColor: fillColors[ti],
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.parsed.y.toFixed(1) + '%'
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(45,55,72,0.5)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8, font: { size: 10 } } },
+          y: {
+            grid: { color: 'rgba(45,55,72,0.5)' },
+            ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' },
+            min: 0, max: 100,
+            suggestedMin: 0, suggestedMax: 100
+          }
+        }
+      }
+    });
+  });
+}
+
+function switchHistPeriod(idxId, type, period) {
+  state.historyPeriod[idxId] = period;
+  // Update active button
+  const htabs = document.getElementById(`htabs-${idxId}-${type}`);
+  if (htabs) {
+    htabs.querySelectorAll('.htab').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent === period);
+    });
+  }
+  // Re-render chart for this type only
+  const d = state.indices[idxId];
+  const colors = { above20SMA: 'rgba(108,99,255,1)', above50SMA: 'rgba(34,197,94,1)', above200SMA: 'rgba(245,158,11,1)' };
+  const fills = { above20SMA: 'rgba(108,99,255,0.15)', above50SMA: 'rgba(34,197,94,0.15)', above200SMA: 'rgba(245,158,11,0.15)' };
+  const canvasId = `chart-${idxId}-${type}`;
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const key = idxId + '-' + type;
+  if (charts[key]) charts[key].destroy();
+  const arr = d.breadthHistory[type][period];
+  const labels = arr.map((_, i) => getPeriodLabel(period, i, arr.length));
+  charts[key] = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Breadth %',
+        data: arr,
+        borderColor: colors[type],
+        backgroundColor: fills[type],
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + '%' } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(45,55,72,0.5)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8, font: { size: 10 } } },
+        y: { grid: { color: 'rgba(45,55,72,0.5)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v + '%' }, min: 0, max: 100 }
+      }
+    }
+  });
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  buildTabs();
+  document.getElementById('lastUpdated').textContent = new Date().toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+});
+</script>
+</body>
+</html>
