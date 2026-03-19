@@ -1,56 +1,47 @@
 name: Index Breadth Dashboard
 
 on:
-  # Run automatically every day at 6:30 AM IST (1:00 AM UTC)
-    schedule:
-        - cron: '0 1 * * 1-5'   # Mon-Fri only (market days)
+  schedule:
+      - cron: "0 1 * * 1-5"
+        workflow_dispatch:
 
-          # Also allow manual trigger from GitHub Actions tab
-            workflow_dispatch:
+        jobs:
+          run-dashboard:
+              runs-on: ubuntu-latest
 
-            jobs:
-              run-dashboard:
-                  runs-on: ubuntu-latest
+                  permissions:
+                        contents: write
 
-                      permissions:
-                            contents: write   # needed to commit the Excel output back to repo
+                            steps:
+                                  - name: Checkout repository
+                                          uses: actions/checkout@v4
 
-                                steps:
-                                      # 1. Checkout the repo
-                                            - name: Checkout repository
-                                                    uses: actions/checkout@v4
+                                                - name: Set up Python 3.11
+                                                        uses: actions/setup-python@v5
+                                                                with:
+                                                                          python-version: "3.11"
 
-                                                          # 2. Set up Python
-                                                                - name: Set up Python 3.11
-                                                                        uses: actions/setup-python@v5
-                                                                                with:
-                                                                                          python-version: '3.11'
-
-                                                                                                # 3. Install dependencies
-                                                                                                      - name: Install dependencies
-                                                                                                              run: |
-                                                                                                                        pip install --upgrade pip
-                                                                                                                                  pip install yfinance pandas openpyxl requests
-                                                                                                                                  
-                                                                                                                                        # 4. Run the dashboard script
-                                                                                                                                              - name: Run breadth dashboard
-                                                                                                                                                      run: python breadth_dashboard.py
-                                                                                                                                                      
-                                                                                                                                                            # 5. Upload the Excel file as a downloadable artifact
-                                                                                                                                                                  - name: Upload Excel report as artifact
-                                                                                                                                                                          uses: actions/upload-artifact@v4
-                                                                                                                                                                                  with:
-                                                                                                                                                                                            name: Index-Breadth-Report
-                                                                                                                                                                                                      path: Index_Breadth_*.xlsx
-                                                                                                                                                                                                                retention-days: 30
-                                                                                                                                                                                                                
-                                                                                                                                                                                                                      # 6. Also commit the Excel + history JSON back into the repo
-                                                                                                                                                                                                                            - name: Commit results to repo
-                                                                                                                                                                                                                                    run: |
-                                                                                                                                                                                                                                              git config user.name  "github-actions[bot]"
-                                                                                                                                                                                                                                                        git config user.email "github-actions[bot]@users.noreply.github.com"
-                                                                                                                                                                                                                                                                  git add Index_Breadth_*.xlsx breadth_history.json || true
-                                                                                                                                                                                                                                                                            git diff --cached --quiet || git commit -m "Auto: breadth report $(date +'%Y-%m-%d %H:%M') UTC"
-                                                                                                                                                                                                                                                                                      git push
-                                                                                                                                                                                                                                                                                              env:
-                                                                                                                                                                                                                                                                                                        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                                                                                - name: Install dependencies
+                                                                                        run: |
+                                                                                                  pip install --upgrade pip
+                                                                                                            pip install yfinance pandas openpyxl requests
+                                                                                                            
+                                                                                                                  - name: Run breadth dashboard
+                                                                                                                          run: python breadth_dashboard.py
+                                                                                                                          
+                                                                                                                                - name: Upload Excel report as artifact
+                                                                                                                                        uses: actions/upload-artifact@v4
+                                                                                                                                                with:
+                                                                                                                                                          name: Index-Breadth-Report
+                                                                                                                                                                    path: Index_Breadth_*.xlsx
+                                                                                                                                                                              retention-days: 30
+                                                                                                                                                                              
+                                                                                                                                                                                    - name: Commit results to repo
+                                                                                                                                                                                            run: |
+                                                                                                                                                                                                      git config user.name "github-actions[bot]"
+                                                                                                                                                                                                                git config user.email "github-actions[bot]@users.noreply.github.com"
+                                                                                                                                                                                                                          git add Index_Breadth_*.xlsx breadth_history.json || true
+                                                                                                                                                                                                                                    git diff --cached --quiet || git commit -m "Auto: breadth report $(date +'%Y-%m-%d %H:%M') UTC"
+                                                                                                                                                                                                                                              git push
+                                                                                                                                                                                                                                                      env:
+                                                                                                                                                                                                                                                                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
