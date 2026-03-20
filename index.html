@@ -51,7 +51,7 @@
     .badge-red{background:rgba(239,68,68,0.15);color:var(--red);}
     .badge-yellow{background:rgba(245,158,11,0.15);color:var(--yellow);}
     .badge-gray{background:rgba(148,163,184,0.15);color:var(--text2);}
-    .breadth-history-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px;}
+    .hist-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px;}
     .history-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
     .history-card .period{font-size:0.7rem;color:var(--text2);margin-bottom:4px;text-transform:uppercase;}
     .history-card .val{font-size:1.3rem;font-weight:700;}
@@ -60,7 +60,7 @@
     .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.74rem;}
     .tag-high{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
     .tag-low{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
-    @media(max-width:768px){.grid-2{grid-template-columns:1fr;}.cards-row{grid-template-columns:repeat(2,1fr);}.breadth-history-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:768px){.grid-2{grid-template-columns:1fr;}.cards-row{grid-template-columns:repeat(2,1fr);}.hist-grid{grid-template-columns:repeat(2,1fr);}}
     </style>
   </head>
   <body>
@@ -78,137 +78,88 @@
   <div class="tabs-wrapper" id="indexTabs"></div>div>
   <div id="tabContents"></div>div>
   <script>
-    const JSON_URL = 'https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/breadth.json';
-    const appState = { data: null };
+    const JSON_URL='https://raw.githubusercontent.com/VJTriumph/index-breadth-dashboard/main/data/breadth.json';
+    const appState={data:null};
+    function color(p){return p>=60?'var(--green)':p>=40?'var(--yellow)':'var(--red)';}
 
-    function color(p){ return p>=60?'var(--green)':p>=40?'var(--yellow)':'var(--red)'; }
-
-    // ── EXCEL EXPORT ──────────────────────────────────────────────────────────────
-    function exportExcel(name, stocks){
+    // Excel export
+    function exportExcel(name,stocks){
         const rows=[['Symbol','Price','Change%','SMA20','SMA50','SMA200','Above SMA20','Above SMA50','Above SMA200','52W High','52W Low','Near 52W High (7%)','Near 52W Low (7%)','Error']];
-        stocks.forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
-                                         s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
-                                         s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
-                                         s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
-                                         s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
-        const ws=XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols']=[10,10,10,10,10,10,12,12,13,10,10,16,15,30].map(w=>({wch:w}));
-        const wb=XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb,ws,name.substring(0,31));
+        stocks.forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,yn(s.aboveSma20),yn(s.aboveSma50),yn(s.aboveSma200),s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
+        const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[10,10,10,10,10,10,12,12,13,10,10,16,15,30].map(w=>({wch:w}));
+        const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,name.substring(0,31));
         XLSX.writeFile(wb,name.replace(/\s+/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.xlsx');
     }
-
     function exportAllExcel(){
-        if(!appState.data) return;
+        if(!appState.data)return;
         const wb=XLSX.utils.book_new();
         const sumR=[['Index','Total','Valid','Errors','Above 20 SMA%','Above 50 SMA%','Above 200 SMA%','Near 52H (7%)','Near 52L (7%)','Updated']];
         Object.entries(appState.data.indices).forEach(([name,idx])=>{
               const b=idx.breadth;
               sumR.push([name,b.total,b.valid,b.errors.length,b.above20Pct+'%',b.above50Pct+'%',b.above200Pct+'%',b.nearHigh.length,b.nearLow.length,appState.data.updatedAt]);
               const rows=[['Symbol','Price','Change%','SMA20','SMA50','SMA200','Above SMA20','Above SMA50','Above SMA200','52W High','52W Low','Near 52H (7%)','Near 52L (7%)','Error']];
-              idx.stocks.forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
-                                                     s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
-                                                     s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
-                                                     s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
-                                                     s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
-              const ws=XLSX.utils.aoa_to_sheet(rows);
-              ws['!cols']=[10,10,10,10,10,10,12,12,13,10,10,14,13,30].map(w=>({wch:w}));
+              idx.stocks.forEach(s=>rows.push([s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,yn(s.aboveSma20),yn(s.aboveSma50),yn(s.aboveSma200),s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
+              const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[10,10,10,10,10,10,12,12,13,10,10,14,13,30].map(w=>({wch:w}));
               XLSX.utils.book_append_sheet(wb,ws,name.substring(0,31));
         });
-        const ws=XLSX.utils.aoa_to_sheet(sumR);
-        ws['!cols']=[22,8,8,8,14,14,15,12,12,20].map(w=>({wch:w}));
+        const ws=XLSX.utils.aoa_to_sheet(sumR);ws['!cols']=[22,8,8,8,14,14,15,12,12,20].map(w=>({wch:w}));
         XLSX.utils.book_append_sheet(wb,ws,'Summary');
         XLSX.writeFile(wb,'Index_Breadth_'+new Date().toISOString().split('T')[0]+'.xlsx');
     }
+    function yn(v){return v===true?'YES':v===false?'NO':'N/A';}
+    function csvEsc(v){const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}
 
-    // ── CSV EXPORT ────────────────────────────────────────────────────────────────
-    function exportCSV(name, stocks){
-        const updatedAt=appState.data?.updatedAt||new Date().toISOString();
-        const header=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200',
-                          'AboveSMA20','AboveSMA50','AboveSMA200','High52W','Low52W','NearHigh7%','NearLow7%','Error'];
-        const rows=stocks.map(s=>[
-              updatedAt,name,s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
-              s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
-              s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
-              s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
-              s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||''
-            ]);
-        const csv=[header,...rows].map(r=>r.map(v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
-        const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;a.download=name.replace(/\s+/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.csv';
-        document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    function exportCSV(name,stocks){
+        const at=appState.data?.updatedAt||new Date().toISOString();
+        const hdr=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200','AboveSMA20','AboveSMA50','AboveSMA200','High52W','Low52W','NearHigh7%','NearLow7%','Error'];
+        const rows=stocks.map(s=>[at,name,s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,yn(s.aboveSma20),yn(s.aboveSma50),yn(s.aboveSma200),s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']);
+        const csv=[hdr,...rows].map(r=>r.map(csvEsc).join(',')).join('\n');
+        const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})),download:name.replace(/\s+/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.csv'});
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
     }
-
     function exportAllCSV(){
-        if(!appState.data) return;
-        const updatedAt=appState.data.updatedAt||new Date().toISOString();
-        const header=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200',
-                          'AboveSMA20','AboveSMA50','AboveSMA200','High52W','Low52W','NearHigh7%','NearLow7%','Error'];
+        if(!appState.data)return;
+        const at=appState.data.updatedAt||new Date().toISOString();
+        const hdr=['FetchedAt','Index','Symbol','Price','Change%','SMA20','SMA50','SMA200','AboveSMA20','AboveSMA50','AboveSMA200','High52W','Low52W','NearHigh7%','NearLow7%','Error'];
         const rows=[];
         Object.entries(appState.data.indices).forEach(([name,idx])=>{
-              (idx.stocks||[]).forEach(s=>{
-                      rows.push([updatedAt,name,s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,
-                                         s.aboveSma20===true?'YES':s.aboveSma20===false?'NO':'N/A',
-                                         s.aboveSma50===true?'YES':s.aboveSma50===false?'NO':'N/A',
-                                         s.aboveSma200===true?'YES':s.aboveSma200===false?'NO':'N/A',
-                                         s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']);
-              });
+              (idx.stocks||[]).forEach(s=>rows.push([at,name,s.symbol,s.price,s.changePct,s.sma20,s.sma50,s.sma200,yn(s.aboveSma20),yn(s.aboveSma50),yn(s.aboveSma200),s.high52,s.low52,s.nearHigh?'YES':'NO',s.nearLow?'YES':'NO',s.error||'']));
         });
-        const csv=[header,...rows].map(r=>r.map(v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
-        const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;a.download='Index_Breadth_All_'+new Date().toISOString().split('T')[0]+'.csv';
-        document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+        const csv=[hdr,...rows].map(r=>r.map(csvEsc).join(',')).join('\n');
+        const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})),download:'Index_Breadth_All_'+new Date().toISOString().split('T')[0]+'.csv'});
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
     }
 
-    // ── TABS ──────────────────────────────────────────────────────────────────────
+    // Tabs
     function buildTabs(names){
-        const te=document.getElementById('indexTabs'), ce=document.getElementById('tabContents');
-        te.innerHTML=''; ce.innerHTML='';
+        const te=document.getElementById('indexTabs'),ce=document.getElementById('tabContents');
+        te.innerHTML='';ce.innerHTML='';
         names.forEach((name,i)=>{
               const b=document.createElement('button');
-              b.className='tab-btn'+(i===0?' active':'');
-              b.id='tbtn-'+i; b.textContent=name;
-              b.onclick=()=>switchTab(i,names);
-              te.appendChild(b);
+              b.className='tab-btn'+(i===0?' active':'');b.id='tbtn-'+i;b.textContent=name;
+              b.onclick=()=>switchTab(i,names);te.appendChild(b);
               const d=document.createElement('div');
-              d.className='tab-content'+(i===0?' active':'');
-              d.id='tab-'+i;
+              d.className='tab-content'+(i===0?' active':'');d.id='tab-'+i;
               d.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Loading...</div>';
               ce.appendChild(d);
         });
     }
-
     function switchTab(idx,names){
-        names.forEach((_,i)=>{
-              document.getElementById('tbtn-'+i)?.classList.toggle('active',i===idx);
-              document.getElementById('tab-'+i)?.classList.toggle('active',i===idx);
-        });
-        if(appState.data?.indices[names[idx]]) renderTab(idx,names[idx]);
+        names.forEach((_,i)=>{document.getElementById('tbtn-'+i)?.classList.toggle('active',i===idx);document.getElementById('tab-'+i)?.classList.toggle('active',i===idx);});
+        if(appState.data?.indices[names[idx]])renderTab(idx,names[idx]);
     }
 
-    // ── RENDER TAB ────────────────────────────────────────────────────────────────
-    function renderTab(idx, name){
-        const idxData = appState.data.indices[name];
-        if(!idxData){
-              document.getElementById('tab-'+idx).innerHTML='<div class="error-banner"><h4>No data for '+name+'</h4></div>';
-              return;
-        }
-        const b = idxData.breadth;
-        const stocks = idxData.stocks || [];
-
+    // Render Tab
+    function renderTab(idx,name){
+        const idxData=appState.data.indices[name];
+        if(!idxData){document.getElementById('tab-'+idx).innerHTML='<div class="error-banner"><h4>No data for '+name+'</h4></div>';return;}
+        const b=idxData.breadth;
+        const stocks=idxData.stocks||[];
         let errHtml='';
-        if(b.errors && b.errors.length>0){
-              errHtml='<div class="error-banner"><h4>Data errors for '+b.errors.length+' stocks:</h4><ul class="error-list">'+b.errors.map(e=>'<li>'+e+'</li>').join('')+'</ul></div>';
-        }
-
+        if(b.errors&&b.errors.length>0)errHtml='<div class="error-banner"><h4>Data errors for '+b.errors.length+' stocks:</h4><ul class="error-list">'+b.errors.map(e=>'<li>'+e+'</li>').join('')+'</ul></div>';
         const rows=stocks.map(s=>{
-              const cc=s.changePct>=0?'green':'red';
-              const sg=s.changePct>=0?'+':'';
-              const sb=(lbl,ab)=>ab===null||ab===undefined?'<span class="badge badge-gray">'+lbl+'</span>':ab?'<span class="badge badge-green">'+lbl+' YES</span>':'<span class="badge badge-red">'+lbl+' NO</span>';
+              const cc=s.changePct>=0?'green':'red',sg=s.changePct>=0?'+':'';
+              const sb=(lbl,ab)=>ab==null?'<span class="badge badge-gray">'+lbl+'</span>':ab?'<span class="badge badge-green">'+lbl+' YES</span>':'<span class="badge badge-red">'+lbl+' NO</span>';
               return '<tr><td><strong>'+s.symbol+'</strong></td>'
                 +'<td>'+(s.price!=null?'&#8377;'+s.price:'\u2014')+'</td>'
                 +'<td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'\u2014')+'</td>'
@@ -217,15 +168,13 @@
                 +'<td>'+(s.nearHigh?'<span class="badge badge-green">52H</span>':'')+(s.nearLow?' <span class="badge badge-red">52L</span>':'')+'</td>'
                 +'<td>'+(s.error?'<span class="badge badge-red" title="'+s.error+'">ERR</span>':'<span class="badge badge-green">OK</span>')+'</td></tr>';
         }).join('');
-
-        const histSec = renderHistSection(name, b.histBreadth || {});
-
-        document.getElementById('tab-'+idx).innerHTML = errHtml
+        const histSec=renderHistSection(b,b.histBreadth||{});
+        document.getElementById('tab-'+idx).innerHTML=errHtml
           +'<div class="section-title">Breadth Summary \u2014 '+name+' ('+b.valid+'/'+b.total+' stocks)</div>'
           +'<div class="cards-row">'
-          +'<div class="card"><div class="label">Above 20 SMA</div><div class="value" style="color:'+color(b.above20Pct)+'">'+b.above20Pct+'%</div><div class="sub">'+b.above20+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above20Pct+'%;background:'+color(b.above20Pct)+'"></div></div></div>'
-          +'<div class="card"><div class="label">Above 50 SMA</div><div class="value" style="color:'+color(b.above50Pct)+'">'+b.above50Pct+'%</div><div class="sub">'+b.above50+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above50Pct+'%;background:'+color(b.above50Pct)+'"></div></div></div>'
-          +'<div class="card"><div class="label">Above 200 SMA</div><div class="value" style="color:'+color(b.above200Pct)+'">'+b.above200Pct+'%</div><div class="sub">'+b.above200+'/'+b.valid+'</div><div class="bar"><div class="bar-fill" style="width:'+b.above200Pct+'%;background:'+color(b.above200Pct)+'"></div></div></div>'
+          +card('Above 20 SMA',b.above20Pct+'%',b.above20+'/'+b.valid,b.above20Pct,true)
+          +card('Above 50 SMA',b.above50Pct+'%',b.above50+'/'+b.valid,b.above50Pct,true)
+          +card('Above 200 SMA',b.above200Pct+'%',b.above200+'/'+b.valid,b.above200Pct,true)
           +'<div class="card"><div class="label">Near 52W High</div><div class="value green">'+b.nearHigh.length+'</div><div class="sub">'+((b.nearHigh.length/b.valid)*100).toFixed(1)+'% (within 7%)</div></div>'
           +'<div class="card"><div class="label">Near 52W Low</div><div class="value red">'+b.nearLow.length+'</div><div class="sub">'+((b.nearLow.length/b.valid)*100).toFixed(1)+'% (within 7%)</div></div>'
           +'</div>'
@@ -233,7 +182,7 @@
           +'<div class="panel"><h3>Near 52-Week High (within 7%)</h3><div class="tags-wrap">'+(b.nearHigh.length?b.nearHigh.map(s=>'<span class="tag tag-high">'+s+'</span>').join(''):'<span style="color:var(--text2)">None</span>')+'</div></div>'
           +'<div class="panel"><h3>Near 52-Week Low (within 7%)</h3><div class="tags-wrap">'+(b.nearLow.length?b.nearLow.map(s=>'<span class="tag tag-low">'+s+'</span>').join(''):'<span style="color:var(--text2)">None</span>')+'</div></div>'
           +'</div>'
-          +'<div class="section-title">Breadth History</div>'+histSec
+          +'<div class="section-title">Breadth History (vs Today)</div>'+histSec
           +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
           +'<div class="section-title" style="margin-bottom:0">Stock Details</div>'
           +'<button class="btn btn-success" onclick="exportCSV(\''+name+'\',appState.data.indices[\''+name+'\'].stocks)" style="margin-right:8px">Export CSV</button>'
@@ -241,65 +190,70 @@
           +'<div class="panel"><h3>Individual Stocks \u2014 Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
     }
 
-    // ── HISTORY SECTION (cards only, no charts) ───────────────────────────────────
-    function renderHistSection(name, histBreadth){
-        const keyMap = {a20:'above20Pct', a50:'above50Pct', a200:'above200Pct'};
+    function card(label,val,sub,pct,bar){
+        return '<div class="card"><div class="label">'+label+'</div>'
+          +'<div class="value" style="color:'+color(pct)+'">'+val+'</div>'
+          +'<div class="sub">'+sub+'</div>'
+          +(bar?'<div class="bar"><div class="bar-fill" style="width:'+pct+'%;background:'+color(pct)+'"></div></div>':'')
+          +'</div>';
+    }
+
+    // History section: shows 3 panels (20/50/200 SMA), each with 4 history cards (1D/1W/1M/3M ago)
+    function renderHistSection(b,histBreadth){
         const types=[
-          {k:'a20', l:'Above 20 SMA', clr:'#6c63ff'},
-          {k:'a50', l:'Above 50 SMA', clr:'#22c55e'},
-          {k:'a200',l:'Above 200 SMA',clr:'#f59e0b'}
+          {label:'Above 20 SMA',cur:b.above20Pct,key:'above20Pct'},
+          {label:'Above 50 SMA',cur:b.above50Pct,key:'above50Pct'},
+          {label:'Above 200 SMA',cur:b.above200Pct,key:'above200Pct'}
             ];
         const periods=['1D','1W','1M','3M'];
-
         return types.map(t=>{
-              const jsonKey=keyMap[t.k];
-              // Current value (today)
-              const cur = histBreadth['1D'] ? null : null; // will use today's data
-              // We use histBreadth which has past values; today's val comes from breadth summary
               const cards=periods.map(p=>{
                       const hb=histBreadth[p];
-                      const pastVal=hb?hb[jsonKey]:null;
+                      const pastVal=hb!=null?hb[t.key]:null;
+                      const chg=(t.cur!=null&&pastVal!=null)?+(t.cur-pastVal).toFixed(1):null;
                       return '<div class="history-card">'
                         +'<div class="period">'+p+' Ago</div>'
                         +(pastVal!=null
                                     ?'<div class="val" style="color:'+color(pastVal)+'">'+pastVal+'%</div>'
-                                      +'<div class="chg" style="font-size:0.65rem;color:var(--text2)">'+hb['above'+t.k.replace('a','')+'']+'...</div>'
+                +(chg!=null?'<div class="chg '+(chg>=0?'green':'red')+'">'+(chg>=0?'+':'')+chg+'% vs now</div>':'')
                                     :'<div class="val" style="color:var(--text2)">\u2014</div>')
                         +'</div>';
               }).join('');
-              return '<div class="panel" style="margin-bottom:16px"><h3>'+t.l+' \u2014 History Snapshot</h3>'
-                +'<div class="breadth-history-grid">'+cards+'</div></div>';
+                          const todayColor=color(t.cur);
+              return '<div class="panel" style="margin-bottom:16px">'
+                +'<h3>'+t.label
+                +(t.cur!=null?' <span style="color:'+todayColor+';font-size:1rem;font-weight:700">'+t.cur+'%</span> today':'')
+                +' \u2014 History</h3>'
+                +'<div class="hist-grid">'+cards+'</div></div>';
         }).join('');
     }
 
-    // ── LOAD DATA ─────────────────────────────────────────────────────────────────
+    // Load
     async function loadDashboard(){
         document.getElementById('loadingBar').style.width='30%';
         try{
-              const r = await fetch(JSON_URL+'?t='+Date.now());
-              if(!r.ok) throw new Error('HTTP '+r.status);
-              const data = await r.json();
-              appState.data = data;
-              document.getElementById('loadingBar').style.width='80%';
-              document.getElementById('lastUpdated').textContent = data.updatedAt || 'Unknown';
-              const names = Object.keys(data.indices);
-              if(!names.length) throw new Error('No index data in JSON');
+              const r=await fetch(JSON_URL+'?t='+Date.now());
+              if(!r.ok)throw new Error('HTTP '+r.status);
+              const data=await r.json();
+              appState.data=data;
+                    document.getElementById('loadingBar').style.width='80%';
+              document.getElementById('lastUpdated').textContent=data.updatedAt||'Unknown';
+              const names=Object.keys(data.indices);
+              if(!names.length)throw new Error('No index data in JSON');
               buildTabs(names);
               names.forEach((name,i)=>renderTab(i,name));
               document.getElementById('loadingBar').style.width='100%';
-              setTimeout(()=>{ document.getElementById('loadingBar').style.width='0%'; },1500);
+              setTimeout(()=>{document.getElementById('loadingBar').style.width='0%';},1500);
         }catch(e){
               document.getElementById('loadingBar').style.width='0%';
-              document.getElementById('globalError').innerHTML=
-                      '<div style="padding:20px"><div class="error-banner">'
-                +'<h4>Failed to load breadth data</h4>'
-                +e.message
-                +'<br><small style="margin-top:8px;display:block;color:var(--text2)">The GitHub Actions workflow runs at 3:30 PM IST on weekdays (EOD). Data may not be available yet.</small>'
+        document.getElementById('globalError').innerHTML=
+                '<div style="padding:20px"><div class="error-banner">'
+                +'<h4>Failed to load breadth data</h4>'+e.message
+                 +'<br><small style="margin-top:8px;display:block;color:var(--text2)">Workflow runs at 3:30 PM IST on weekdays (EOD). Data may not be available yet.</small>'
                 +'</div></div>';
         }
     }
-
-    window.addEventListener('DOMContentLoaded', loadDashboard);
+    window.addEventListener('DOMContentLoaded',loadDashboard);
   </script>
   </body>
 </html>html>
