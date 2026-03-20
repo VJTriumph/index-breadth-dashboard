@@ -73,12 +73,14 @@ def fetch_one(symbol):
         if len(closes) < 5:
             return {"symbol": symbol, "error": "Insufficient closes"}
 
-        # closes.iloc[-1] = last COMPLETED trading session close (prev EOD)
-        # This is the correct base for % change calculation
-        prev_eod_close = float(closes.iloc[-1])
+        # closes.iloc[-1] = today's bar (may be partial intraday or today's EOD)
+        # closes.iloc[-2] = last COMPLETED trading session close (prev EOD)
+        # Use iloc[-2] as prevClose base for % change
+        today_close = float(closes.iloc[-1])
+        prev_eod_close = float(closes.iloc[-2]) if len(closes) >= 2 else today_close
 
         # Try to get live/current price from fast_info
-        # live price = today's current trading price (intraday or today's close after 3:30 PM)
+        # This gives real-time intraday price during market hours
         live_price = None
         try:
             fi = tk.fast_info
@@ -88,30 +90,29 @@ def fetch_one(symbol):
         except Exception:
             pass
 
-        # If live price available and different from prev_eod_close, use it as today's price
-        # Otherwise fall back to prev_eod_close (e.g. weekend/holiday)
+        # Use live_price if available, else fall back to today's close bar
         if live_price and live_price > 0:
             price = live_price
-            # Change % = (live_price - prev_eod_close) / prev_eod_close
-            # prev_eod_close is the last full day close (yesterday)
-            chgPct = round((price - prev_eod_close) / prev_eod_close * 100, 2) if prev_eod_close else 0.0
         else:
-            price = round(prev_eod_close, 2)
-            chgPct = 0.0
+            price = round(today_close, 2)
+
+        # Change % = (price - prev_eod_close) / prev_eod_close
+        chgPct = round((price - prev_eod_close) / prev_eod_close * 100, 2) if prev_eod_close else 0.0
 
         # 52W high/low based on historical daily closes (last 252 trading days ~1 year)
         closes_1y = closes.iloc[-252:] if len(closes) >= 252 else closes
         high52 = round(float(closes_1y.max()), 2)
         low52  = round(float(closes_1y.min()), 2)
 
-        # SMA functions: offset=0 means using latest N closes
+        # SMA functions: offset=1 means prev EOD (iloc[-2]), offset=0 would be today's partial bar
+        # We use offset=1 as the "current" baseline to match prev_eod_close
         def sma_at(offset, n):
-            end_idx = len(closes) - offset
+            end_idx = len(closes) - 1 - offset  # -1 skips today's partial bar
             if end_idx < n: return None
             return round(float(closes.iloc[end_idx - n:end_idx].mean()), 2)
 
         def price_at(offset):
-            idx = len(closes) - 1 - offset
+            idx = len(closes) - 2 - offset  # -2 skips today's partial bar
             if idx < 0: return None
             return float(closes.iloc[idx])
 
