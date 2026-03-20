@@ -2,39 +2,39 @@ name: Index Breadth Dashboard
 
 on:
   schedule:
-      - cron: "0 10 * * 1-5"
-        workflow_dispatch:
+    - cron: "0 10 * * 1-5"
+  workflow_dispatch:
 
-        jobs:
-          run-dashboard:
-              runs-on: ubuntu-latest
-                  permissions:
-                        contents: write
+jobs:
+  run-dashboard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-                            steps:
-                                  - name: Checkout repository
-                                          uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-                                                - name: Set up Python 3.11
-                                                        uses: actions/setup-python@v5
-                                                                with:
-                                                                          python-version: "3.11"
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-                                                                                - name: Install dependencies
-                                                                                        run: |
-                                                                                                  pip install --upgrade pip
-                                                                                                            pip install "yfinance>=0.2.40" pandas requests
-                                                                                                            
-                                                                                                                  - name: Run breadth dashboard
-                                                                                                                          run: python breadth_dashboard.py
-                                                                                                                          
-                                                                                                                                - name: Commit data files to repo
-                                                                                                                                        run: |
-                                                                                                                                                  git config user.name "github-actions[bot]"
-                                                                                                                                                            git config user.email "github-actions[bot]@users.noreply.github.com"
-                                                                                                                                                                      git add -f data/breadth.json data/breadth_crosscheck.csv breadth_history.json
-                                                                                                                                                                                git diff --cached --stat
-                                                                                                                                                                                          git diff --cached --quiet || git commit -m "Auto: breadth EOD data $(date +'%Y-%m-%d %H:%M') UTC"
-                                                                                                                                                                                                    git push
-                                                                                                                                                                                                            env:
-                                                                                                                                                                                                                      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install "yfinance>=0.2.40" pandas requests
+
+      - name: Run breadth dashboard
+        run: python breadth_dashboard.py
+
+      - name: Commit data files to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/breadth.json data/breadth_crosscheck.csv breadth_history.json
+          git diff --cached --stat
+          git diff --cached --quiet || git commit -m "Auto: breadth EOD data $(date +'%Y-%m-%d %H:%M') UTC"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
