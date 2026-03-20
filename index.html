@@ -161,7 +161,7 @@
               const cc=s.changePct>=0?'green':'red',sg=s.changePct>=0?'+':'';
               const sb=(lbl,ab)=>ab==null?'<span class="badge badge-gray">'+lbl+'</span>':ab?'<span class="badge badge-green">'+lbl+' YES</span>':'<span class="badge badge-red">'+lbl+' NO</span>';
               return '<tr><td><strong>'+s.symbol+'</strong></td>'
-                +'<td>'+(s.price!=null?'&#8377;'+s.price:'\u2014')+'</td>'
+                +'<td>'+(s.price!=null?'&#8377;'+s.price:'\u2014')+'</td>'+'<td>'+(s.prevClose!=null?'&#8377;'+s.prevClose:'\u2014')+'</td>'
                 +'<td class="'+cc+'">'+(s.changePct!=null?sg+s.changePct+'%':'\u2014')+'</td>'
                 +'<td>'+(s.sma20||'\u2014')+'</td><td>'+(s.sma50||'\u2014')+'</td><td>'+(s.sma200||'\u2014')+'</td>'
                 +'<td>'+sb('20',s.aboveSma20)+' '+sb('50',s.aboveSma50)+' '+sb('200',s.aboveSma200)+'</td>'
@@ -187,7 +187,7 @@
           +'<div class="section-title" style="margin-bottom:0">Stock Details</div>'
           +'<button class="btn btn-success" onclick="exportCSV(\''+name+'\',appState.data.indices[\''+name+'\'].stocks)" style="margin-right:8px">Export CSV</button>'
           +'<button class="btn btn-success" onclick="exportExcel(\''+name+'\',appState.data.indices[\''+name+'\'].stocks)">Export Excel</button></div>'
-          +'<div class="panel"><h3>Individual Stocks \u2014 Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+          +'<div class="panel"><h3>Individual Stocks \u2014 Yahoo Finance Data</h3><div style="overflow-x:auto"><table class="stock-table"><thead><tr><th>Symbol</th><th>Price</th><th>Prev Close</th><th>Chg%</th><th>SMA20</th><th>SMA50</th><th>SMA200</th><th>SMA Status</th><th>52W</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
     }
 
     function card(label,val,sub,pct,bar){
